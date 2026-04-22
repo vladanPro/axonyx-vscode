@@ -101,6 +101,34 @@
       "patterns": [
         {
           "name": "meta.tag.block.ax",
+          "begin": "(</?)(Head|Title|Theme|Meta|Link|Script|Each|If|Else|Slot)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.ax" },
+            "2": { "name": "support.type.builtin.ax" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.ax" }
+          },
+          "patterns": [
+            {
+              "name": "entity.other.attribute-name",
+              "match": "\\b[a-zA-Z_:][a-zA-Z0-9_:.-]*\\b(?=\\s*=)"
+            },
+            {
+              "name": "keyword.operator.assignment",
+              "match": "="
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#expressions"
+            }
+          ]
+        },
+        {
+          "name": "meta.tag.block.ax",
           "begin": "(</?)([A-Z][A-Za-z0-9._:-]*)",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.ax" },
@@ -112,11 +140,11 @@
           },
           "patterns": [
             {
-              "name": "entity.other.attribute-name.ax",
+              "name": "entity.other.attribute-name",
               "match": "\\b[a-zA-Z_:][a-zA-Z0-9_:.-]*\\b(?=\\s*=)"
             },
             {
-              "name": "keyword.operator.assignment.ax",
+              "name": "keyword.operator.assignment",
               "match": "="
             },
             {
@@ -140,11 +168,11 @@
           },
           "patterns": [
             {
-              "name": "entity.other.attribute-name.ax",
+              "name": "entity.other.attribute-name",
               "match": "\\b[a-zA-Z_:][a-zA-Z0-9_:.-]*\\b(?=\\s*=)"
             },
             {
-              "name": "keyword.operator.assignment.ax",
+              "name": "keyword.operator.assignment",
               "match": "="
             },
             {
@@ -160,10 +188,17 @@
     "legacy-tags": {
       "patterns": [
         {
+          "name": "meta.legacy-builtin.ax",
+          "match": "^\\s*(Head|Title|Theme|Meta|Link|Script|Each|If|Else|Slot)(?=\\s+(?:[a-zA-Z_][A-Za-z0-9_-]*\\s*:|->)|\\s*$)",
+          "captures": {
+            "1": { "name": "support.type.builtin.ax" }
+          }
+        },
+        {
           "name": "meta.legacy-component.ax",
           "match": "^\\s*([A-Z][A-Za-z0-9_]*)(?=\\s+(?:[a-zA-Z_][A-Za-z0-9_-]*\\s*:|->)|\\s*$)",
           "captures": {
-            "1": { "name": "entity.name.tag" }
+            "1": { "name": "support.class.component" }
           }
         },
         {
@@ -174,11 +209,11 @@
           }
         },
         {
-          "name": "entity.other.attribute-name.ax",
-          "match": "\\b[a-zA-Z_][a-zA-Z0-9_-]*\\b(?=\\s*:)"
+          "name": "entity.other.attribute-name",
+          "match": "\\b[a-zA-Z_][A-Za-z0-9_-]*\\b(?=\\s*:)"
         },
         {
-          "name": "keyword.operator.mapping.ax",
+          "name": "keyword.operator.assignment",
           "match": "->|:"
         }
       ]
