@@ -101,21 +101,38 @@
       "patterns": [
         {
           "name": "meta.tag.block.ax",
-          "begin": "</?([A-Za-z][A-Za-z0-9._:-]*)",
+          "begin": "(</?)([A-Z][A-Za-z0-9._:-]*)",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.tag.begin.ax" },
-            "1": {
-              "patterns": [
-                {
-                  "name": "entity.name.tag.component.ax",
-                  "match": "^[A-Z][A-Za-z0-9._:-]*$"
-                },
-                {
-                  "name": "entity.name.tag.ax",
-                  "match": "^[a-z][A-Za-z0-9._:-]*$"
-                }
-              ]
+            "1": { "name": "punctuation.definition.tag.begin.ax" },
+            "2": { "name": "support.class.component" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.ax" }
+          },
+          "patterns": [
+            {
+              "name": "entity.other.attribute-name.ax",
+              "match": "\\b[a-zA-Z_:][a-zA-Z0-9_:.-]*\\b(?=\\s*=)"
+            },
+            {
+              "name": "keyword.operator.assignment.ax",
+              "match": "="
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#expressions"
             }
+          ]
+        },
+        {
+          "name": "meta.tag.block.ax",
+          "begin": "(</?)([a-z][A-Za-z0-9._:-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.ax" },
+            "2": { "name": "entity.name.tag" }
           },
           "end": "(/?>)",
           "endCaptures": {
@@ -144,16 +161,16 @@
       "patterns": [
         {
           "name": "meta.legacy-component.ax",
-          "match": "^\\s*([A-Z][A-Za-z0-9_]*)\\b",
+          "match": "^\\s*([A-Z][A-Za-z0-9_]*)(?=\\s+(?:[a-zA-Z_][A-Za-z0-9_-]*\\s*:|->)|\\s*$)",
           "captures": {
-            "1": { "name": "entity.name.tag.component.ax" }
+            "1": { "name": "entity.name.tag" }
           }
         },
         {
           "name": "meta.legacy-tag.ax",
-          "match": "^\\s*([a-z][A-Za-z0-9_-]*)\\b",
+          "match": "^\\s*([a-z][A-Za-z0-9_-]*)(?=\\s+(?:[a-zA-Z_][A-Za-z0-9_-]*\\s*:|->)|\\s*$)",
           "captures": {
-            "1": { "name": "entity.name.tag.ax" }
+            "1": { "name": "entity.name.tag" }
           }
         },
         {
