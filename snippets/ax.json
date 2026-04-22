@@ -1,0 +1,67 @@
+{
+  "Page": {
+    "prefix": "ax-page",
+    "body": [
+      "page ${1:Home}",
+      "",
+      "<Head>",
+      "  <Title>${2:Axonyx}</Title>",
+      "</Head>",
+      "",
+      "<Container max=\"xl\">",
+      "  ${0}",
+      "</Container>"
+    ],
+    "description": "Create a basic Axonyx page"
+  },
+  "Import Component": {
+    "prefix": "ax-import",
+    "body": [
+      "import { ${1:SectionCard} } from \"${2:@axonyx/ui/foundry/SectionCard.ax}\""
+    ],
+    "description": "Import an Axonyx component"
+  },
+  "Head": {
+    "prefix": "ax-head",
+    "body": [
+      "<Head>",
+      "  <Title>${1:Page Title}</Title>",
+      "  <Theme>${2:silver}</Theme>",
+      "</Head>"
+    ],
+    "description": "Insert an Axonyx Head block"
+  },
+  "Each": {
+    "prefix": "ax-each",
+    "body": [
+      "<Each items={${1:items}} as=\"${2:item}\">",
+      "  ${0}",
+      "</Each>"
+    ],
+    "description": "Insert an Each block"
+  },
+  "If": {
+    "prefix": "ax-if",
+    "body": [
+      "<If when={${1:condition}}>",
+      "  ${0}",
+      "</If>"
+    ],
+    "description": "Insert an If block"
+  },
+  "Slot": {
+    "prefix": "ax-slot",
+    "body": [
+      "<Slot />"
+    ],
+    "description": "Insert a Slot tag"
+  },
+  "Route": {
+    "prefix": "ax-route",
+    "body": [
+      "route ${1:GET} \"${2:/api/example}\"",
+      "  ${0:return { ok: true }}"
+    ],
+    "description": "Create a basic Axonyx route"
+  }
+}

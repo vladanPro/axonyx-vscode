@@ -1,0 +1,58 @@
+{
+  "name": "axonyx-vscode",
+  "displayName": "Axonyx",
+  "description": "VS Code language support for Axonyx .ax files.",
+  "version": "0.0.1",
+  "publisher": "vladanpro",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "axonyx",
+    "ax",
+    "rust",
+    "framework",
+    "syntax-highlighting"
+  ],
+  "activationEvents": [
+    "onLanguage:ax"
+  ],
+  "main": "./noop.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ax",
+        "aliases": [
+          "Axonyx",
+          "ax"
+        ],
+        "extensions": [
+          ".ax"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ax",
+        "scopeName": "source.ax",
+        "path": "./syntaxes/ax.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ax",
+        "path": "./snippets/ax.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:vladanPro/axonyx-vscode.git"
+  }
+}

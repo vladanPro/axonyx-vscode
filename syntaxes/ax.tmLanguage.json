@@ -1,0 +1,254 @@
+{
+  "name": "Axonyx",
+  "scopeName": "source.ax",
+  "fileTypes": ["ax"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#imports" },
+    { "include": "#route-declaration" },
+    { "include": "#declarations" },
+    { "include": "#jsx-tags" },
+    { "include": "#legacy-tags" },
+    { "include": "#expressions" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#strings" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ax",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ax",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "imports": {
+      "patterns": [
+        {
+          "name": "meta.import.ax",
+          "begin": "^\\s*(import)\\b",
+          "beginCaptures": {
+            "1": { "name": "keyword.control.import.ax" }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "name": "keyword.control.from.ax",
+              "match": "\\bfrom\\b"
+            },
+            {
+              "name": "keyword.control.as.ax",
+              "match": "\\bas\\b"
+            },
+            {
+              "name": "entity.name.type.ax",
+              "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+            },
+            {
+              "name": "variable.other.readwrite.ax",
+              "match": "\\b[a-z_][A-Za-z0-9_]*\\b"
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "name": "punctuation.definition.brace.ax",
+              "match": "[{}]"
+            }
+          ]
+        }
+      ]
+    },
+    "route-declaration": {
+      "patterns": [
+        {
+          "name": "meta.route.ax",
+          "match": "^\\s*(route)\\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\\s+(\"[^\"]*\"|'[^']*')",
+          "captures": {
+            "1": { "name": "keyword.declaration.route.ax" },
+            "2": { "name": "keyword.other.http-method.ax" },
+            "3": { "name": "string.quoted.double.ax" }
+          }
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "meta.page-declaration.ax",
+          "match": "^\\s*(page|layout|job|loader|action|actions)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "captures": {
+            "1": { "name": "keyword.declaration.ax" },
+            "2": { "name": "entity.name.type.ax" }
+          }
+        },
+        {
+          "name": "meta.directive.ax",
+          "match": "^\\s*(title|meta|link|script|theme|data|return|each|if|else|form)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.directive.ax" }
+          }
+        }
+      ]
+    },
+    "jsx-tags": {
+      "patterns": [
+        {
+          "name": "meta.tag.block.ax",
+          "begin": "</?([A-Za-z][A-Za-z0-9._:-]*)",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.tag.begin.ax" },
+            "1": {
+              "patterns": [
+                {
+                  "name": "entity.name.tag.component.ax",
+                  "match": "^[A-Z][A-Za-z0-9._:-]*$"
+                },
+                {
+                  "name": "entity.name.tag.ax",
+                  "match": "^[a-z][A-Za-z0-9._:-]*$"
+                }
+              ]
+            }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.ax" }
+          },
+          "patterns": [
+            {
+              "name": "entity.other.attribute-name.ax",
+              "match": "\\b[a-zA-Z_:][a-zA-Z0-9_:.-]*\\b(?=\\s*=)"
+            },
+            {
+              "name": "keyword.operator.assignment.ax",
+              "match": "="
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#expressions"
+            }
+          ]
+        }
+      ]
+    },
+    "legacy-tags": {
+      "patterns": [
+        {
+          "name": "meta.legacy-component.ax",
+          "match": "^\\s*([A-Z][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "entity.name.tag.component.ax" }
+          }
+        },
+        {
+          "name": "meta.legacy-tag.ax",
+          "match": "^\\s*([a-z][A-Za-z0-9_-]*)\\b",
+          "captures": {
+            "1": { "name": "entity.name.tag.ax" }
+          }
+        },
+        {
+          "name": "entity.other.attribute-name.ax",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_-]*\\b(?=\\s*:)"
+        },
+        {
+          "name": "keyword.operator.mapping.ax",
+          "match": "->|:"
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "name": "meta.embedded.expression.ax",
+          "begin": "\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.section.embedded.begin.ax" }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.embedded.end.ax" }
+          },
+          "patterns": [
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#constants"
+            },
+            {
+              "include": "#keywords"
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ax",
+          "match": "\\b(import|from|as|page|route|layout|job|loader|action|actions|title|meta|link|script|theme|data|return|each|in|if|else|form|when)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.ax",
+          "match": "\\b(true|false|null)\\b"
+        },
+        {
+          "name": "constant.numeric.ax",
+          "match": "\\b\\d+(?:\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ax",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.ax" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.ax" }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.ax",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ax",
+          "begin": "'",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.ax" }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.ax" }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.ax",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
