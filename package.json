@@ -20,9 +20,10 @@
     "syntax-highlighting"
   ],
   "activationEvents": [
-    "onLanguage:ax"
+    "onLanguage:ax",
+    "onCommand:axonyx.runDiagnostics"
   ],
-  "main": "./noop.js",
+  "main": "./extension.js",
   "contributes": {
     "languages": [
       {
@@ -48,6 +49,12 @@
       {
         "language": "ax",
         "path": "./snippets/ax.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "axonyx.runDiagnostics",
+        "title": "Axonyx: Run Diagnostics"
       }
     ]
   },

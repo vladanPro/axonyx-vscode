@@ -12,12 +12,15 @@ This first version focuses on making `.ax` files readable in VS Code:
 - indentation-first Axonyx syntax such as `Card title: "..."` and `Copy -> "..."`
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
 - starter snippets for pages, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
+- parser-backed diagnostics through `cargo ax check` on open/save
 
 ## Local Development
 
 1. Open this folder in VS Code.
 2. Run `Developer: Install Extension from Location...` and choose this repo folder.
 3. Open any `.ax` file.
+
+If you are working inside the Axonyx repo family, the extension also looks for a local sibling `axonyx-framework` checkout and can run diagnostics through that source tree.
 
 Alternative dev flow:
 
@@ -27,7 +30,6 @@ Alternative dev flow:
 
 ## Next Good Steps
 
-- better scopes for `Each`, `If`, `Slot`, and future `override`
-- diagnostics from the real Axonyx parser
+- faster background diagnostics with a persistent checker process
 - go-to-definition for local and `@axonyx/ui/...` imports
 - formatter support
