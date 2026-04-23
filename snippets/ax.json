@@ -27,9 +27,22 @@
       "<Head>",
       "  <Title>${1:Page Title}</Title>",
       "  <Theme>${2:silver}</Theme>",
+      "  ${0}",
       "</Head>"
     ],
     "description": "Insert an Axonyx Head block"
+  },
+  "Foundry Head": {
+    "prefix": "ax-head-full",
+    "body": [
+      "<Head>",
+      "  <Title>${1:Page Title}</Title>",
+      "  <Theme>${2:silver}</Theme>",
+      "  <Meta name=\"description\" content=\"${3:Page description}\" />",
+      "  <Link rel=\"stylesheet\" href=\"/css/axonyx-ui/index.css\" />",
+      "</Head>"
+    ],
+    "description": "Insert a fuller Axonyx Head block with theme and stylesheet"
   },
   "Each": {
     "prefix": "ax-each",
@@ -55,6 +68,101 @@
       "<Slot />"
     ],
     "description": "Insert a Slot tag"
+  },
+  "Copy": {
+    "prefix": "ax-copy",
+    "body": [
+      "<Copy>",
+      "  ${0}",
+      "</Copy>"
+    ],
+    "description": "Insert a Copy block"
+  },
+  "Lead Copy": {
+    "prefix": "ax-copy-lead",
+    "body": [
+      "<Copy tone=\"lead\">",
+      "  ${0}",
+      "</Copy>"
+    ],
+    "description": "Insert a lead Copy block"
+  },
+  "Card": {
+    "prefix": "ax-card",
+    "body": [
+      "<Card title=\"${1:Card title}\">",
+      "  ${0}",
+      "</Card>"
+    ],
+    "description": "Insert a base Card block"
+  },
+  "SectionCard": {
+    "prefix": "ax-section-card",
+    "body": [
+      "<SectionCard title=\"${1:Section title}\">",
+      "  ${0}",
+      "</SectionCard>"
+    ],
+    "description": "Insert a Foundry SectionCard block"
+  },
+  "HeroCard": {
+    "prefix": "ax-hero-card",
+    "body": [
+      "<HeroCard title=\"${1:Hero title}\">",
+      "  ${0}",
+      "</HeroCard>"
+    ],
+    "description": "Insert a Foundry HeroCard block"
+  },
+  "ContentGrid": {
+    "prefix": "ax-grid",
+    "body": [
+      "<ContentGrid cols={${1:2}} gap=\"${2:lg}\">",
+      "  ${0}",
+      "</ContentGrid>"
+    ],
+    "description": "Insert a Foundry ContentGrid block"
+  },
+  "SiteShell": {
+    "prefix": "ax-site-shell",
+    "body": [
+      "<SiteShell max=\"${1:xl}\">",
+      "  ${0}",
+      "</SiteShell>"
+    ],
+    "description": "Insert a Foundry SiteShell block"
+  },
+  "Import Foundry Set": {
+    "prefix": "ax-import-foundry",
+    "body": [
+      "import { SiteShell } from \"@axonyx/ui/foundry/SiteShell.ax\"",
+      "import { HeroCard } from \"@axonyx/ui/foundry/HeroCard.ax\"",
+      "import { ContentGrid } from \"@axonyx/ui/foundry/ContentGrid.ax\"",
+      "import { SectionCard } from \"@axonyx/ui/foundry/SectionCard.ax\""
+    ],
+    "description": "Import the common Foundry UI component set"
+  },
+  "Page With Foundry": {
+    "prefix": "ax-page-foundry",
+    "body": [
+      "import { ContentGrid } from \"@axonyx/ui/foundry/ContentGrid.ax\"",
+      "import { SectionCard } from \"@axonyx/ui/foundry/SectionCard.ax\"",
+      "",
+      "page ${1:Home}",
+      "",
+      "<Head>",
+      "  <Title>${2:Axonyx}</Title>",
+      "</Head>",
+      "",
+      "<Container max=\"xl\">",
+      "  <ContentGrid cols={2} gap=\"lg\">",
+      "    <SectionCard title=\"${3:Section title}\">",
+      "      ${0}",
+      "    </SectionCard>",
+      "  </ContentGrid>",
+      "</Container>"
+    ],
+    "description": "Create a page that starts with Foundry imports and layout"
   },
   "Route": {
     "prefix": "ax-route",

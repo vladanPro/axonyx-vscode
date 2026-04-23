@@ -11,7 +11,7 @@ This first version focuses on making `.ax` files readable in VS Code:
 - JSX-like tags such as `<Head>`, `<SectionCard>`, `<Slot />`
 - indentation-first Axonyx syntax such as `Card title: "..."` and `Copy -> "..."`
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
-- starter snippets for pages, imports, `Head`, `Each`, `If`, `Slot`, and routes
+- starter snippets for pages, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
 
 ## Local Development
 
