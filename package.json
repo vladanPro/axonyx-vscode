@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "publisher": "vladanpro",
   "license": "MIT",
+  "icon": "assets/axonyx-x-icon.svg",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -35,7 +36,11 @@
         "extensions": [
           ".ax"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./assets/axonyx-x-icon.svg",
+          "dark": "./assets/axonyx-x-icon.svg"
+        }
       }
     ],
     "grammars": [
