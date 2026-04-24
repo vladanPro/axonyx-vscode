@@ -1,0 +1,20 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Axonyx X icon">
+  <defs>
+    <linearGradient id="bronzeA" x1="18" y1="16" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC53D"/>
+      <stop offset="0.52" stop-color="#CF9160"/>
+      <stop offset="1" stop-color="#7A4A2E"/>
+    </linearGradient>
+    <linearGradient id="bronzeB" x1="46" y1="16" x2="18" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD98A"/>
+      <stop offset="0.5" stop-color="#CF9160"/>
+      <stop offset="1" stop-color="#8A5636"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#071019"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#253243" stroke-opacity="0.85"/>
+  <path d="M18 16 L30 16 L46 48 L34 48 Z" fill="url(#bronzeA)"/>
+  <path d="M46 16 L34 16 L18 48 L30 48 Z" fill="url(#bronzeB)"/>
+  <circle cx="32" cy="32" r="4.5" fill="#071019" opacity="0.95"/>
+  <circle cx="32" cy="32" r="2" fill="#FFC53D"/>
+</svg>
