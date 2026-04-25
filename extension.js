@@ -179,7 +179,7 @@ class AxonyxDiagnosticRunner {
     this.hasWarned = false;
   }
 
-  validate(document, force = false) {
+  async validate(document, force = false) {
     if (document.languageId !== "ax" || document.uri.scheme !== "file") {
       return Promise.resolve();
     }
@@ -196,13 +196,13 @@ class AxonyxDiagnosticRunner {
     return new Promise((resolve) => {
       const timer = setTimeout(async () => {
         this.pending.delete(key);
+        const diagnostics = getLocalValueDiagnostics(document);
         try {
-          const diagnostics = await runAxCheck(document);
-          this.collection.set(document.uri, diagnostics);
+          diagnostics.push(...(await runAxCheck(document)));
         } catch (error) {
-          this.collection.delete(document.uri);
           this.reportExecutionIssue(error, document);
         }
+        this.collection.set(document.uri, diagnostics);
         resolve();
       }, force ? 0 : 250);
 
@@ -222,6 +222,33 @@ class AxonyxDiagnosticRunner {
       );
     }
   }
+}
+
+function getLocalValueDiagnostics(document) {
+  const diagnostics = [];
+  const text = document.getText();
+  const regex = /\b(variant|surface|border|brush|gap|align|max|tone|state)\s*=\s*"([^"]+)"/g;
+  let match;
+
+  while ((match = regex.exec(text))) {
+    const prop = match[1];
+    const value = match[2];
+    const allowed = VALUE_SUGGESTIONS[prop];
+    if (!allowed || allowed.includes(value)) continue;
+
+    const start = document.positionAt(match.index + match[0].indexOf(value));
+    const end = document.positionAt(match.index + match[0].indexOf(value) + value.length);
+    const diagnostic = new vscode.Diagnostic(
+      new vscode.Range(start, end),
+      `Invalid ${prop} value "${value}". Expected one of: ${allowed.join(", ")}.`,
+      vscode.DiagnosticSeverity.Warning,
+    );
+    diagnostic.source = "axonyx";
+    diagnostic.code = "axonyx-prop-value";
+    diagnostics.push(diagnostic);
+  }
+
+  return diagnostics;
 }
 
 async function runAxCheck(document) {
