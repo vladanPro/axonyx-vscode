@@ -30,6 +30,28 @@ const VALUE_SUGGESTIONS = {
   active: ["docs", "components", "examples", "getting-started", "button", "card", "forms", "command", "layout", "surfaces"]
 };
 
+const HOVER_DOCS = {
+  Button: "**Button**\n\nAction or navigation control. Common props: `variant`, `surface`, `border`, `href`, `disabled`.",
+  SectionCard: "**SectionCard**\n\nFoundry content panel. Supports `title`, `surface`, `brush`, and `border`.",
+  ContentGrid: "**ContentGrid**\n\nResponsive content grid. Common props: `cols`, `gap`.",
+  Stack: "**Stack**\n\nVertical layout primitive. Common props: `gap`, `align`.",
+  Cluster: "**Cluster**\n\nHorizontal wrapping layout primitive for buttons, badges, nav items, and toolbars.",
+  Card: "**Card**\n\nGeneric Foundry work surface. Supports brushed, forged, inset, and forged border treatments.",
+  Copy: "**Copy**\n\nText primitive. Common tones: `lead`, `muted`, `eyebrow`.",
+  Field: "**Field**\n\nForm wrapper for label, hint, error, and controls. Use `state=\"error\"` for error UI.",
+  Input: "**Input**\n\nInset metal text input.",
+  Select: "**Select**\n\nNative select styled with Foundry inset/forged treatments.",
+  Command: "**Command**\n\nDeveloper-grade command palette surface.",
+  CommandItem: "**CommandItem**\n\nCommand palette option. Supports `active` and `shortcut`.",
+  AxMasthead: "**AxMasthead**\n\nAxonyx site-level navigation component. Props: `brand`, `active`.",
+  AxSidebar: "**AxSidebar**\n\nAxonyx docs/sidebar navigation component. Props: `title`, `active`.",
+  route: "**route**\n\nReserved runtime binding for request route context. Use `route.path`, `route.section`, `route.item`, `route.segments`.",
+  "route.path": "**route.path**\n\nFull request path, for example `/components/button`.",
+  "route.section": "**route.section**\n\nFirst route segment, for example `components` from `/components/button`.",
+  "route.item": "**route.item**\n\nSecond route segment, for example `button` from `/components/button`.",
+  "route.segments": "**route.segments**\n\nArray of path segments. Planned runtime context field."
+};
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Axonyx");
   const collection = vscode.languages.createDiagnosticCollection("axonyx");
@@ -37,6 +59,7 @@ function activate(context) {
 
   context.subscriptions.push(output, collection);
   context.subscriptions.push(registerAxonyxCompletions());
+  context.subscriptions.push(registerAxonyxHovers());
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       runner.validate(document);
@@ -106,7 +129,7 @@ function registerAxonyxCompletions() {
         if (/<[A-Za-z][\w-]*\s+[^>]*$/.test(linePrefix)) {
           return PROPS.map((prop) => {
             const item = new vscode.CompletionItem(prop, vscode.CompletionItemKind.Property);
-            item.insertText = new vscode.SnippetString(`${prop}="$1"`);
+            item.insertText = new vscode.SnippetString(`${prop}=\"$1\"`);
             item.detail = "Axonyx prop";
             return item;
           });
@@ -129,6 +152,22 @@ function registerAxonyxCompletions() {
       }
     },
     ".", "<", "\"", " ", "="
+  );
+}
+
+function registerAxonyxHovers() {
+  return vscode.languages.registerHoverProvider(
+    { language: "ax", scheme: "file" },
+    {
+      provideHover(document, position) {
+        const range = document.getWordRangeAtPosition(position, /[A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)?/);
+        if (!range) return null;
+        const word = document.getText(range);
+        const doc = HOVER_DOCS[word];
+        if (!doc) return null;
+        return new vscode.Hover(new vscode.MarkdownString(doc), range);
+      }
+    }
   );
 }
 
