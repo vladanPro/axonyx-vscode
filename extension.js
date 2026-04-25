@@ -5,12 +5,38 @@ const cp = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
+const COMPONENTS = [
+  "Head", "Title", "Container", "Slot", "Button", "SectionCard", "ContentGrid",
+  "Stack", "Cluster", "Card", "Copy", "Badge", "Field", "Input", "Textarea",
+  "Select", "Option", "Command", "CommandItem", "AxMasthead", "AxSidebar"
+];
+
+const PROPS = [
+  "href", "variant", "surface", "border", "brush", "gap", "align", "cols", "max",
+  "title", "tone", "active", "state", "placeholder", "disabled", "invalid", "surface",
+  "railWidth", "brand"
+];
+
+const VALUE_SUGGESTIONS = {
+  variant: ["primary", "ghost", "accent", "outline"],
+  surface: ["brushed", "forged", "inset"],
+  border: ["forged"],
+  brush: ["horizontal", "vertical", "diagonal", "reverse-diagonal"],
+  gap: ["sm", "md", "lg", "xl", "2xl"],
+  align: ["start", "center", "end", "stretch"],
+  max: ["md", "lg", "xl"],
+  tone: ["lead", "muted", "eyebrow"],
+  state: ["error", "success", "warning"],
+  active: ["docs", "components", "examples", "getting-started", "button", "card", "forms", "command", "layout", "surfaces"]
+};
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Axonyx");
   const collection = vscode.languages.createDiagnosticCollection("axonyx");
   const runner = new AxonyxDiagnosticRunner(collection, output);
 
   context.subscriptions.push(output, collection);
+  context.subscriptions.push(registerAxonyxCompletions());
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       runner.validate(document);
@@ -50,6 +76,61 @@ function activate(context) {
 }
 
 function deactivate() {}
+
+function registerAxonyxCompletions() {
+  return vscode.languages.registerCompletionItemProvider(
+    { language: "ax", scheme: "file" },
+    {
+      provideCompletionItems(document, position) {
+        const linePrefix = document.lineAt(position).text.slice(0, position.character);
+
+        if (/route\.$/.test(linePrefix)) {
+          return ["path", "section", "item", "segments"].map((name) => {
+            const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Property);
+            item.insertText = name;
+            item.detail = `route.${name}`;
+            return item;
+          });
+        }
+
+        const valueMatch = linePrefix.match(/([A-Za-z][\w-]*)\s*=\s*"[^"]*$/);
+        if (valueMatch && VALUE_SUGGESTIONS[valueMatch[1]]) {
+          return VALUE_SUGGESTIONS[valueMatch[1]].map((value) => {
+            const item = new vscode.CompletionItem(value, vscode.CompletionItemKind.Value);
+            item.insertText = value;
+            item.detail = `${valueMatch[1]} value`;
+            return item;
+          });
+        }
+
+        if (/<[A-Za-z][\w-]*\s+[^>]*$/.test(linePrefix)) {
+          return PROPS.map((prop) => {
+            const item = new vscode.CompletionItem(prop, vscode.CompletionItemKind.Property);
+            item.insertText = new vscode.SnippetString(`${prop}="$1"`);
+            item.detail = "Axonyx prop";
+            return item;
+          });
+        }
+
+        if (/<[A-Za-z]*$/.test(linePrefix)) {
+          return COMPONENTS.map((name) => {
+            const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Class);
+            item.insertText = name;
+            item.detail = "Axonyx component";
+            return item;
+          });
+        }
+
+        return ["page", "component", "import", "let", "route"].map((word) => {
+          const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Keyword);
+          item.insertText = word;
+          return item;
+        });
+      }
+    },
+    ".", "<", "\"", " ", "="
+  );
+}
 
 class AxonyxDiagnosticRunner {
   constructor(collection, output) {
