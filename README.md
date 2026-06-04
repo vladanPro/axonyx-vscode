@@ -12,6 +12,7 @@ This first version focuses on making `.ax` files readable in VS Code:
 - indentation-first Axonyx syntax such as `Card title: "..."` and `Copy -> "..."`
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
 - starter snippets for pages, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
+- newer Foundry snippets for `Form`, `FormGroup`, `Fieldset`, `Table`, `TableHead`, `TableCell`, `PaginationItem`, and layout primitives
 - parser-backed diagnostics through `cargo ax check` on open/save
 
 ## Local Development
@@ -22,6 +23,12 @@ This first version focuses on making `.ax` files readable in VS Code:
 
 If you are working inside the Axonyx repo family, the extension also looks for a local sibling `axonyx-framework` checkout and can run diagnostics through that source tree.
 
+For published CLI diagnostics, install the current beta CLI:
+
+```bash
+cargo install cargo-axonyx --version 0.1.43 --force
+```
+
 Alternative dev flow:
 
 1. Install `vsce` if needed: `npm install -g @vscode/vsce`
@@ -31,5 +38,6 @@ Alternative dev flow:
 ## Next Good Steps
 
 - faster background diagnostics with a persistent checker process
+- `axonyx-lsp` as a Rust language server behind the extension
 - go-to-definition for local and `@axonyx/ui/...` imports
 - formatter support

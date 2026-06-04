@@ -142,6 +142,116 @@
     ],
     "description": "Import the common Foundry UI component set"
   },
+  "Import Foundry Form Set": {
+    "prefix": "ax-import-form",
+    "body": [
+      "import { Form } from \"@axonyx/ui/foundry/Form.ax\"",
+      "import { FormGroup } from \"@axonyx/ui/foundry/FormGroup.ax\"",
+      "import { Fieldset } from \"@axonyx/ui/foundry/Fieldset.ax\"",
+      "import { Legend } from \"@axonyx/ui/foundry/Legend.ax\"",
+      "import { Field } from \"@axonyx/ui/foundry/Field.ax\"",
+      "import { Input } from \"@axonyx/ui/foundry/Input.ax\"",
+      "import { Button } from \"@axonyx/ui/foundry/Button.ax\""
+    ],
+    "description": "Import native Foundry form primitives"
+  },
+  "Import Foundry Table Set": {
+    "prefix": "ax-import-table",
+    "body": [
+      "import { Table } from \"@axonyx/ui/foundry/Table.ax\"",
+      "import { TableHead } from \"@axonyx/ui/foundry/TableHead.ax\"",
+      "import { TableBody } from \"@axonyx/ui/foundry/TableBody.ax\"",
+      "import { TableRow } from \"@axonyx/ui/foundry/TableRow.ax\"",
+      "import { TableCell } from \"@axonyx/ui/foundry/TableCell.ax\"",
+      "import { TableHeaderCell } from \"@axonyx/ui/foundry/TableHeaderCell.ax\""
+    ],
+    "description": "Import native Foundry table primitives"
+  },
+  "Form": {
+    "prefix": "ax-form",
+    "body": [
+      "<Form method=\"${1:post}\" action=\"${2:/api/action}\" surface=\"${3:forged}\">",
+      "  ${0}",
+      "</Form>"
+    ],
+    "description": "Insert a Foundry Form block"
+  },
+  "Form Group": {
+    "prefix": "ax-form-group",
+    "body": [
+      "<FormGroup cols=\"${1:2}\" gap=\"${2:lg}\">",
+      "  ${0}",
+      "</FormGroup>"
+    ],
+    "description": "Insert a responsive Foundry FormGroup"
+  },
+  "Fieldset": {
+    "prefix": "ax-fieldset",
+    "body": [
+      "<Fieldset surface=\"${1:forged}\">",
+      "  <Legend>${2:Section}</Legend>",
+      "  ${0}",
+      "</Fieldset>"
+    ],
+    "description": "Insert a Fieldset with Legend"
+  },
+  "Field With Input": {
+    "prefix": "ax-field-input",
+    "body": [
+      "<Field htmlFor=\"${1:field-id}\">",
+      "  <span slot=\"label\">${2:Label}</span>",
+      "  <Input id=\"${1:field-id}\" name=\"${3:name}\" placeholder=\"${4:Value}\" />",
+      "  <span slot=\"hint\">${5:Helper text}</span>",
+      "</Field>"
+    ],
+    "description": "Insert a Field with Input, label, and hint"
+  },
+  "Table": {
+    "prefix": "ax-table",
+    "body": [
+      "<Table zebra=\"${1:true}\">",
+      "  <TableHead>",
+      "    <TableRow>",
+      "      <TableHeaderCell>${2:Name}</TableHeaderCell>",
+      "      <TableHeaderCell align=\"right\">${3:Status}</TableHeaderCell>",
+      "    </TableRow>",
+      "  </TableHead>",
+      "  <TableBody>",
+      "    <TableRow>",
+      "      <TableCell>${4:Item}</TableCell>",
+      "      <TableCell align=\"right\">${5:Ready}</TableCell>",
+      "    </TableRow>",
+      "  </TableBody>",
+      "</Table>"
+    ],
+    "description": "Insert a compound Foundry Table"
+  },
+  "Pagination": {
+    "prefix": "ax-pagination",
+    "body": [
+      "<Pagination current=\"${1:2}\" total=\"${2:8}\" previous=\"${3:#}\" next=\"${4:#}\">",
+      "  <PaginationItem href=\"${5:#}\">1</PaginationItem>",
+      "  <PaginationItem href=\"${6:#}\" current=\"true\">2</PaginationItem>",
+      "  <PaginationEllipsis />",
+      "  <PaginationItem href=\"${7:#}\">8</PaginationItem>",
+      "</Pagination>"
+    ],
+    "description": "Insert a compound Foundry Pagination"
+  },
+  "AppShell": {
+    "prefix": "ax-app-shell",
+    "body": [
+      "<AppShell gap=\"${1:lg}\">",
+      "  <Sidebar slot=\"sidebar\">",
+      "    ${2}",
+      "  </Sidebar>",
+      "  <Main>",
+      "    ${0}",
+      "  </Main>",
+      "</AppShell>"
+    ],
+    "description": "Insert an AppShell layout block"
+  },
   "Page With Foundry": {
     "prefix": "ax-page-foundry",
     "body": [

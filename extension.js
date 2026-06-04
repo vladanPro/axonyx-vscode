@@ -6,15 +6,29 @@ const fs = require("fs");
 const path = require("path");
 
 const COMPONENTS = [
-  "Head", "Title", "Container", "Slot", "Button", "SectionCard", "ContentGrid",
-  "Stack", "Cluster", "Card", "Copy", "Badge", "Field", "Input", "Textarea",
-  "Select", "Option", "Command", "CommandItem", "AxMasthead", "AxSidebar"
+  "Head", "Title", "Theme", "Meta", "Link", "Script", "Container", "Grid", "Slot",
+  "Button", "ButtonGroup", "IconButton", "LinkButton", "SectionCard", "HeroCard",
+  "ContentGrid", "Stack", "Cluster", "Box", "Flex", "Center", "Spacer", "Inset",
+  "Bleed", "Header", "Main", "Sidebar", "Footer", "AppShell", "Card", "Copy",
+  "Badge", "Chip", "Alert", "Field", "FieldLabel", "FieldHint", "FieldError",
+  "Form", "FormGroup", "Fieldset", "Legend", "Input", "Textarea", "Select",
+  "Option", "Checkbox", "Radio", "Switch", "Slider", "MachineSwitch", "Table",
+  "TableHead", "TableBody", "TableRow", "TableCell", "TableHeaderCell",
+  "TableCaption", "Pagination", "PaginationItem", "PaginationEllipsis",
+  "Breadcrumbs", "BreadcrumbItem", "BreadcrumbCurrent", "Command", "CommandList",
+  "Menu", "MenuItem", "DropdownMenu", "DropdownItem", "Drawer", "Modal",
+  "Popover", "Tooltip", "Tabs", "Tab", "Accordion", "AccordionItem", "Toast",
+  "ToastViewport", "StatusLamp", "Progress", "Skeleton", "Rating", "Stat",
+  "Timeline", "TimelineItem", "List", "ListItem", "Surface", "Toolbar",
+  "EmptyState", "Avatar"
 ];
 
 const PROPS = [
   "href", "variant", "surface", "border", "brush", "gap", "align", "cols", "max",
   "title", "tone", "active", "state", "placeholder", "disabled", "invalid", "surface",
-  "railWidth", "brand"
+  "railWidth", "brand", "layout", "density", "method", "action", "htmlFor", "id",
+  "name", "type", "value", "checked", "size", "scope", "current", "total", "previous",
+  "next", "padding", "justify", "wrap", "open", "side", "label"
 ];
 
 const VALUE_SUGGESTIONS = {
@@ -23,10 +37,21 @@ const VALUE_SUGGESTIONS = {
   border: ["forged"],
   brush: ["horizontal", "vertical", "diagonal", "reverse-diagonal"],
   gap: ["sm", "md", "lg", "xl", "2xl"],
-  align: ["start", "center", "end", "stretch"],
+  align: ["start", "center", "end", "stretch", "left", "right"],
   max: ["md", "lg", "xl"],
   tone: ["lead", "muted", "eyebrow"],
   state: ["error", "success", "warning"],
+  layout: ["grid", "inline"],
+  density: ["compact", "sm", "md", "lg"],
+  size: ["sm", "md", "lg"],
+  padding: ["sm", "md", "lg"],
+  justify: ["start", "center", "end", "between"],
+  wrap: ["true", "false"],
+  current: ["true", "false"],
+  disabled: ["true", "false"],
+  checked: ["true", "false"],
+  open: ["open", ""],
+  side: ["left", "right", "top", "bottom"],
   active: ["docs", "components", "examples", "getting-started", "button", "card", "forms", "command", "layout", "surfaces"]
 };
 
@@ -39,8 +64,28 @@ const HOVER_DOCS = {
   Card: "**Card**\n\nGeneric Foundry work surface. Supports brushed, forged, inset, and forged border treatments.",
   Copy: "**Copy**\n\nText primitive. Common tones: `lead`, `muted`, `eyebrow`.",
   Field: "**Field**\n\nForm wrapper for label, hint, error, and controls. Use `state=\"error\"` for error UI.",
+  Form: "**Form**\n\nNative form wrapper. Common props: `method`, `action`, `layout`, `density`, `surface`.",
+  FormGroup: "**FormGroup**\n\nResponsive form layout group. Common props: `cols`, `gap`.",
+  Fieldset: "**Fieldset**\n\nSemantic grouped controls. Use `surface=\"forged\"` for Foundry panel treatment.",
+  Legend: "**Legend**\n\nFieldset title primitive.",
+  FieldLabel: "**FieldLabel**\n\nStandalone label primitive. Use `htmlFor` to link it to a control id.",
+  FieldHint: "**FieldHint**\n\nStandalone helper text below a control.",
+  FieldError: "**FieldError**\n\nStandalone validation error text.",
   Input: "**Input**\n\nInset metal text input.",
   Select: "**Select**\n\nNative select styled with Foundry inset/forged treatments.",
+  Table: "**Table**\n\nData table wrapper. Common props: `density`, `zebra`.",
+  TableHead: "**TableHead**\n\nSemantic table header section.",
+  TableBody: "**TableBody**\n\nSemantic table body section.",
+  TableRow: "**TableRow**\n\nSemantic table row.",
+  TableCell: "**TableCell**\n\nTable data cell. Use `align=\"right\"` or `align=\"center\"` when needed.",
+  TableHeaderCell: "**TableHeaderCell**\n\nTable header cell. Common props: `scope`, `align`.",
+  TableCaption: "**TableCaption**\n\nAccessible table caption.",
+  Pagination: "**Pagination**\n\nPaged navigation wrapper. Supports summary props and child page items.",
+  PaginationItem: "**PaginationItem**\n\nPage link child for Pagination. Common props: `href`, `current`, `disabled`.",
+  PaginationEllipsis: "**PaginationEllipsis**\n\nVisual gap marker for numbered Pagination.",
+  Box: "**Box**\n\nLayout primitive for padding and surface grouping.",
+  Flex: "**Flex**\n\nFlexible row/column layout primitive. Common props: `gap`, `align`, `justify`, `wrap`.",
+  AppShell: "**AppShell**\n\nWorkspace shell for docs, dashboards, and CMS/admin layouts.",
   Command: "**Command**\n\nDeveloper-grade command palette surface.",
   CommandItem: "**CommandItem**\n\nCommand palette option. Supports `active` and `shortcut`.",
   AxMasthead: "**AxMasthead**\n\nAxonyx site-level navigation component. Props: `brand`, `active`.",
