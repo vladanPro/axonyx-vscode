@@ -82,17 +82,42 @@
       "patterns": [
         {
           "name": "meta.page-declaration.ax",
-          "match": "^\\s*(page|layout|job|loader|action|actions)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "match": "^\\s*(page|layout|component|scope|job|loader|query|action|actions|domain|helper)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
           "captures": {
             "1": { "name": "keyword.declaration.ax" },
             "2": { "name": "entity.name.type.ax" }
           }
         },
         {
+          "name": "meta.type-declaration.ax",
+          "match": "^\\s*(type|interface|struct|enum|impl)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "captures": {
+            "1": { "name": "keyword.declaration.ax" },
+            "2": { "name": "entity.name.type.ax" }
+          }
+        },
+        {
+          "name": "meta.function-declaration.ax",
+          "match": "^\\s*(export\\s+)?(fn|function)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "captures": {
+            "1": { "name": "keyword.control.export.ax" },
+            "2": { "name": "keyword.declaration.function.ax" },
+            "3": { "name": "entity.name.function.ax" }
+          }
+        },
+        {
           "name": "meta.directive.ax",
-          "match": "^\\s*(title|meta|link|script|theme|data|return|each|if|else|form)\\b",
+          "match": "^\\s*(title|meta|link|script|theme|state|data|const|let|return|each|if|else|form|guard|require|client|style|render|props)\\b",
           "captures": {
             "1": { "name": "keyword.control.directive.ax" }
+          }
+        },
+        {
+          "name": "meta.return-asx.ax",
+          "match": "\\b(return)\\s+(ASX)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.return.ax" },
+            "2": { "name": "support.type.asx.ax" }
           }
         }
       ]
@@ -248,7 +273,15 @@
       "patterns": [
         {
           "name": "keyword.control.ax",
-          "match": "\\b(import|from|as|page|route|layout|job|loader|action|actions|title|meta|link|script|theme|data|return|each|in|if|else|form|when)\\b"
+          "match": "\\b(import|export|from|as|page|route|layout|component|scope|domain|helper|job|loader|query|action|actions|title|meta|link|script|theme|state|data|const|let|return|ASX|each|in|if|else|form|when|guard|require|client|style|render|props|type|interface|struct|enum|impl|fn|function)\\b"
+        },
+        {
+          "name": "support.type.primitive.ax",
+          "match": "\\b(String|Number|Bool|Boolean|List|Map|Secret|Result|Option|DateTime|Json|Html|ASX)\\b"
+        },
+        {
+          "name": "support.function.database.ax",
+          "match": "\\b(db|Content|Env|State|Auth|Crypto)\\b(?:\\.[A-Za-z_][A-Za-z0-9_]*)*"
         }
       ]
     },

@@ -28,7 +28,8 @@ const PROPS = [
   "title", "tone", "active", "state", "placeholder", "disabled", "invalid", "surface",
   "railWidth", "brand", "layout", "density", "method", "action", "htmlFor", "id",
   "name", "type", "value", "checked", "size", "scope", "current", "total", "previous",
-  "next", "padding", "justify", "wrap", "open", "side", "label"
+  "next", "padding", "justify", "wrap", "open", "side", "label", "class", "className",
+  "items", "as", "when", "slot", "aria-label", "data-ax-behavior"
 ];
 
 const VALUE_SUGGESTIONS = {
@@ -90,6 +91,11 @@ const HOVER_DOCS = {
   CommandItem: "**CommandItem**\n\nCommand palette option. Supports `active` and `shortcut`.",
   AxMasthead: "**AxMasthead**\n\nAxonyx site-level navigation component. Props: `brand`, `active`.",
   AxSidebar: "**AxSidebar**\n\nAxonyx docs/sidebar navigation component. Props: `title`, `active`.",
+  page: "**page**\n\nPages ASX V1 entry point. Prefer `page Name() { return ASX { ... } }`.",
+  component: "**component**\n\nReusable ASX component declaration. Planned shape: props/state/client/style/render.",
+  scope: "**scope**\n\nAxonyx composition boundary for page/domain/action injection and shared state.",
+  query: "**query**\n\nServer-side data loader function. Use route-local loaders for database/content reads.",
+  action: "**action**\n\nServer-side mutation function. Use with native forms and action bindings.",
   route: "**route**\n\nReserved runtime binding for request route context. Use `route.path`, `route.section`, `route.item`, `route.segments`.",
   "route.path": "**route.path**\n\nFull request path, for example `/components/button`.",
   "route.section": "**route.section**\n\nFirst route segment, for example `components` from `/components/button`.",
@@ -105,6 +111,7 @@ function activate(context) {
   context.subscriptions.push(output, collection);
   context.subscriptions.push(registerAxonyxCompletions());
   context.subscriptions.push(registerAxonyxHovers());
+  context.subscriptions.push(registerAxonyxFormatter());
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       runner.validate(document);
@@ -135,6 +142,11 @@ function activate(context) {
       if (editor) {
         await runner.validate(editor.document, true);
       }
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("axonyx.formatDocument", async () => {
+      await vscode.commands.executeCommand("editor.action.formatDocument");
     }),
   );
 
@@ -189,7 +201,10 @@ function registerAxonyxCompletions() {
           });
         }
 
-        return ["page", "component", "import", "let", "route"].map((word) => {
+        return [
+          "page", "component", "scope", "query", "action", "guard", "import", "type",
+          "state", "data", "const", "let", "return ASX", "route"
+        ].map((word) => {
           const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Keyword);
           item.insertText = word;
           return item;
@@ -214,6 +229,120 @@ function registerAxonyxHovers() {
       }
     }
   );
+}
+
+function registerAxonyxFormatter() {
+  return vscode.languages.registerDocumentFormattingEditProvider(
+    { language: "ax", scheme: "file" },
+    {
+      provideDocumentFormattingEdits(document) {
+        const formatted = formatAxonyx(document.getText());
+        if (formatted === document.getText()) {
+          return [];
+        }
+
+        const lastLine = document.lineCount - 1;
+        const lastCharacter = document.lineAt(lastLine).text.length;
+        const fullRange = new vscode.Range(0, 0, lastLine, lastCharacter);
+        return [vscode.TextEdit.replace(fullRange, formatted)];
+      }
+    }
+  );
+}
+
+function formatAxonyx(text) {
+  const normalized = text.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  const formatted = [];
+  let indent = 0;
+  let previousBlank = false;
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      if (!previousBlank && formatted.length > 0) {
+        formatted.push("");
+        previousBlank = true;
+      }
+      continue;
+    }
+
+    const currentIndent = Math.max(indent - leadingCloseDepth(trimmed), 0);
+    formatted.push(`${"  ".repeat(currentIndent)}${trimmed}`);
+    previousBlank = false;
+    indent = Math.max(currentIndent + netOpenDepth(trimmed), 0);
+  }
+
+  while (formatted.length > 0 && formatted[formatted.length - 1] === "") {
+    formatted.pop();
+  }
+
+  return `${formatted.join("\n")}\n`;
+}
+
+function leadingCloseDepth(line) {
+  if (/^(<\/|}|]|\))/.test(line)) {
+    return 1;
+  }
+  return 0;
+}
+
+function netOpenDepth(line) {
+  if (line.startsWith("//")) {
+    return 0;
+  }
+
+  let depth = 0;
+  depth += countStructuralChar(line, "{") - countStructuralChar(line, "}");
+  depth += countStructuralChar(line, "[") - countStructuralChar(line, "]");
+  depth += countStructuralChar(line, "(") - countStructuralChar(line, ")");
+
+  const tagOpen = line.match(/^<([A-Za-z][\w.:-]*)(?=\s|>|$)/);
+  const closingTag = /^<\//.test(line);
+  const selfClosingTag = /\/>\s*$/.test(line);
+  const sameLineClose = tagOpen && new RegExp(`</${escapeRegExp(tagOpen[1])}>\\s*$`).test(line);
+  if (tagOpen && !closingTag && !selfClosingTag && !sameLineClose) {
+    depth += 1;
+  }
+
+  return depth;
+}
+
+function countStructuralChar(line, char) {
+  let count = 0;
+  let quote = null;
+  let escaped = false;
+
+  for (const current of line) {
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (current === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (quote) {
+      if (current === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (current === "\"" || current === "'" || current === "`") {
+      quote = current;
+      continue;
+    }
+    if (current === char) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 class AxonyxDiagnosticRunner {
@@ -426,4 +555,5 @@ function execFile(command, args, options) {
 module.exports = {
   activate,
   deactivate,
+  formatAxonyx,
 };
