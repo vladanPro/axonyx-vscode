@@ -1,12 +1,13 @@
 # Axonyx VS Code Extension
 
-Syntax highlighting, snippets, diagnostics, and basic formatting for Axonyx `.ax` files.
+Syntax highlighting, snippets, diagnostics, and basic formatting for Axonyx
+`.ax` files.
 
 ## MVP Scope
 
 This version focuses on making modern Pages ASX files readable and pleasant in VS Code:
 
-- Pages ASX V1 declarations such as `page Home() { return ASX { ... } }`
+- Pages V2 declarations such as `page Home() { return ASX { ... } }`
 - `component`, `scope`, `query`, `action`, `guard`, `state`, `data`, `type`, and `interface`
 - `import ... from`
 - JSX-like tags such as `<Head>`, `<SectionCard>`, `<Slot />`
@@ -15,6 +16,8 @@ This version focuses on making modern Pages ASX files readable and pleasant in V
 - newer Foundry snippets for `Form`, `FormGroup`, `Fieldset`, `Table`, `TableHead`, `TableCell`, `PaginationItem`, and layout primitives
 - parser-backed diagnostics through `cargo ax check` on open/save
 - basic document formatting through `Format Document` or `Axonyx: Format Document`
+- distinct highlighting for typed props/parameters, bindings, function calls,
+  runtime scopes, operators, and ASX component/HTML tags
 
 Example:
 
@@ -45,7 +48,7 @@ If you are working inside the Axonyx repo family, the extension also looks for a
 For published CLI diagnostics, install the current beta CLI:
 
 ```bash
-cargo install cargo-axonyx --version 0.1.85 --force
+cargo install cargo-axonyx --force
 ```
 
 To format on save, enable VS Code formatting for Axonyx files:
@@ -69,5 +72,6 @@ Alternative dev flow:
 
 - faster background diagnostics with a persistent checker process
 - `axonyx-lsp` as a Rust language server behind the extension
+- Contract V1-backed component/prop completion and hover details
 - go-to-definition for local and `@axonyx/ui/...` imports
 - semantic formatting powered by the future `axonyx-lsp`

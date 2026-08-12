@@ -7,9 +7,13 @@
     { "include": "#imports" },
     { "include": "#route-declaration" },
     { "include": "#declarations" },
+    { "include": "#bindings" },
     { "include": "#jsx-tags" },
     { "include": "#legacy-tags" },
     { "include": "#expressions" },
+    { "include": "#types" },
+    { "include": "#function-calls" },
+    { "include": "#operators" },
     { "include": "#keywords" },
     { "include": "#constants" },
     { "include": "#strings" }
@@ -82,10 +86,26 @@
       "patterns": [
         {
           "name": "meta.page-declaration.ax",
-          "match": "^\\s*(page|layout|component|scope|job|loader|query|action|actions|domain|helper)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "match": "^\\s*(page|layout|component|scope)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
           "captures": {
             "1": { "name": "keyword.declaration.ax" },
             "2": { "name": "entity.name.type.ax" }
+          }
+        },
+        {
+          "name": "meta.backend-function-declaration.ax",
+          "match": "^\\s*(export\\s+)?(query|loader|action|helper|job)\\s+([A-Za-z_][A-Za-z0-9_]*)?",
+          "captures": {
+            "1": { "name": "keyword.control.export.ax" },
+            "2": { "name": "keyword.declaration.function.ax" },
+            "3": { "name": "entity.name.function.ax" }
+          }
+        },
+        {
+          "name": "meta.backend-declaration.ax",
+          "match": "^\\s*(backend|actions|domain)\\b",
+          "captures": {
+            "1": { "name": "keyword.declaration.ax" }
           }
         },
         {
@@ -118,6 +138,31 @@
           "captures": {
             "1": { "name": "keyword.control.return.ax" },
             "2": { "name": "support.type.asx.ax" }
+          }
+        }
+      ]
+    },
+    "bindings": {
+      "patterns": [
+        {
+          "name": "meta.binding.ax",
+          "match": "^\\s*(state|data|const|let)\\s+([a-z_][A-Za-z0-9_]*)(\\??)(?:\\s*(:)\\s*([A-Z][A-Za-z0-9_]*(?:<[^>\\n]+>)?(?:\\[\\])?))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.variable.ax" },
+            "2": { "name": "variable.other.definition.ax" },
+            "3": { "name": "keyword.operator.optional.ax" },
+            "4": { "name": "punctuation.separator.type.ax" },
+            "5": { "name": "entity.name.type.ax" }
+          }
+        },
+        {
+          "name": "meta.typed-parameter.ax",
+          "match": "\\b([a-z_][A-Za-z0-9_]*)(\\??)(\\s*:\\s*)([A-Z][A-Za-z0-9_]*(?:<[^>\\n]+>)?(?:\\[\\])?)",
+          "captures": {
+            "1": { "name": "variable.parameter.ax" },
+            "2": { "name": "keyword.operator.optional.ax" },
+            "3": { "name": "punctuation.separator.type.ax" },
+            "4": { "name": "entity.name.type.ax" }
           }
         }
       ]
@@ -263,9 +308,62 @@
               "include": "#constants"
             },
             {
+              "include": "#types"
+            },
+            {
+              "include": "#function-calls"
+            },
+            {
+              "include": "#operators"
+            },
+            {
               "include": "#keywords"
             }
           ]
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.ax",
+          "match": "\\b(String|Number|Bool|Boolean|List|Map|Optional|Option|Result|Secret|DateTime|Json|Html|ASX|Vec|i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize|f32|f64|string|bool)\\b"
+        },
+        {
+          "name": "entity.name.type.ax",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b(?=\\s*(?:<|\\[\\]|\\?|[,)=;{]))"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.ax",
+          "match": "\\b(log|guard|refresh|invalidate|redirect|json|ok|notFound)!(?=\\s*\\()"
+        },
+        {
+          "name": "entity.name.function.member.ax",
+          "match": "(?<=\\.)[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "entity.name.function.ax",
+          "match": "\\b(?!if\\b|for\\b|while\\b|match\\b|return\\b|guard\\b|require\\b)[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "support.variable.runtime.ax",
+          "match": "\\b(db|input|request|params|query|env|app|page|session|State|Content|Env|Auth|Crypto)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.ax",
+          "match": "\\?\\?|\\?\\.|=>|->|==|!=|<=|>=|&&|\\|\\||[+*/%<>!=?-]"
+        },
+        {
+          "name": "punctuation.separator.ax",
+          "match": "[,;:]"
         }
       ]
     },
@@ -273,15 +371,7 @@
       "patterns": [
         {
           "name": "keyword.control.ax",
-          "match": "\\b(import|export|from|as|page|route|layout|component|scope|domain|helper|job|loader|query|action|actions|title|meta|link|script|theme|state|data|const|let|return|ASX|each|in|if|else|form|when|guard|require|client|style|render|props|type|interface|struct|enum|impl|fn|function)\\b"
-        },
-        {
-          "name": "support.type.primitive.ax",
-          "match": "\\b(String|Number|Bool|Boolean|List|Map|Secret|Result|Option|DateTime|Json|Html|ASX)\\b"
-        },
-        {
-          "name": "support.function.database.ax",
-          "match": "\\b(db|Content|Env|State|Auth|Crypto)\\b(?:\\.[A-Za-z_][A-Za-z0-9_]*)*"
+          "match": "\\b(import|export|from|as|page|route|layout|component|scope|backend|domain|helper|job|loader|query|action|actions|title|meta|link|script|theme|state|data|const|let|return|ASX|each|in|if|else|form|when|guard|require|client|JS|WASM|style|render|props|type|interface|struct|enum|impl|fn|function|match|for|while|break|continue|async|await)\\b"
         }
       ]
     },
