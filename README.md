@@ -1,19 +1,41 @@
 # Axonyx VS Code Extension
 
-Syntax highlighting and snippets for Axonyx `.ax` files.
+Syntax highlighting, snippets, diagnostics, and basic formatting for Axonyx
+`.ax` files.
 
 ## MVP Scope
 
-This first version focuses on making `.ax` files readable in VS Code:
+This version focuses on making modern Pages ASX files readable and pleasant in VS Code:
 
-- `page`, `route`, `title`, `meta`, `link`, `theme`, `data`, `return`
+- Pages V2 declarations such as `page Home() { return ASX { ... } }`
+- `component`, `scope`, `query`, `action`, `guard`, `state`, `data`, `type`, and `interface`
 - `import ... from`
 - JSX-like tags such as `<Head>`, `<SectionCard>`, `<Slot />`
-- indentation-first Axonyx syntax such as `Card title: "..."` and `Copy -> "..."`
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
-- starter snippets for pages, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
+- starter snippets for pages, data pages, components, scopes, queries, actions, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
 - newer Foundry snippets for `Form`, `FormGroup`, `Fieldset`, `Table`, `TableHead`, `TableCell`, `PaginationItem`, and layout primitives
 - parser-backed diagnostics through `cargo ax check` on open/save
+- basic document formatting through `Format Document` or `Axonyx: Format Document`
+- distinct highlighting for typed props/parameters, bindings, function calls,
+  runtime scopes, operators, and ASX component/HTML tags
+
+Example:
+
+```ax
+page Home() {
+  data posts: List<Post> = loadPosts("published")
+
+  return ASX {
+    <Container max="xl">
+      <Each items={posts} as="post">
+        <Card title={post.title}>
+          <Copy>{post.excerpt}</Copy>
+        </Card>
+      </Each>
+    </Container>
+  }
+}
+```
 
 ## Local Development
 
@@ -26,7 +48,18 @@ If you are working inside the Axonyx repo family, the extension also looks for a
 For published CLI diagnostics, install the current beta CLI:
 
 ```bash
-cargo install cargo-axonyx --version 0.1.43 --force
+cargo install cargo-axonyx --force
+```
+
+To format on save, enable VS Code formatting for Axonyx files:
+
+```json
+{
+  "[ax]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "vladanpro.axonyx-vscode"
+  }
+}
 ```
 
 Alternative dev flow:
@@ -39,5 +72,6 @@ Alternative dev flow:
 
 - faster background diagnostics with a persistent checker process
 - `axonyx-lsp` as a Rust language server behind the extension
+- Contract V1-backed component/prop completion and hover details
 - go-to-definition for local and `@axonyx/ui/...` imports
-- formatter support
+- semantic formatting powered by the future `axonyx-lsp`

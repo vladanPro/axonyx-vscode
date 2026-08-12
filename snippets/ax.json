@@ -2,17 +2,85 @@
   "Page": {
     "prefix": "ax-page",
     "body": [
-      "page ${1:Home}",
+      "page ${1:Home}() {",
+      "  return ASX {",
+      "    <Head>",
+      "      <Title>${2:Axonyx}</Title>",
+      "    </Head>",
       "",
-      "<Head>",
-      "  <Title>${2:Axonyx}</Title>",
-      "</Head>",
-      "",
-      "<Container max=\"xl\">",
-      "  ${0}",
-      "</Container>"
+      "    <Container max=\"xl\">",
+      "      ${0}",
+      "    </Container>",
+      "  }",
+      "}"
     ],
-    "description": "Create a basic Axonyx page"
+    "description": "Create a function-shaped Pages V2 Axonyx page"
+  },
+  "Page With Data": {
+    "prefix": "ax-page-data",
+    "body": [
+      "import { ${1:loadItems} } from \"./loader.ax\"",
+      "",
+      "page ${2:Items}() {",
+      "  data ${3:items}: List<${4:Item}> = ${1:loadItems}()",
+      "",
+      "  return ASX {",
+      "    <Container max=\"xl\">",
+      "      <Each items={${3:items}} as=\"${5:item}\">",
+      "        ${0}",
+      "      </Each>",
+      "    </Container>",
+      "  }",
+      "}"
+    ],
+    "description": "Create a Pages V2 page with a typed data binding"
+  },
+  "Component": {
+    "prefix": "ax-component",
+    "body": [
+      "component ${1:ThemeSwitcher}(${2:label}: String = \"${3:Theme}\") {",
+      "  render ASX {",
+      "    ${0}",
+      "  }",
+      "}"
+    ],
+    "description": "Create a typed Pages V2 component"
+  },
+  "Query": {
+    "prefix": "ax-query",
+    "body": [
+      "query ${1:loadPosts}(${2:status}: String) -> List<${3:Post}> {",
+      "  data ${4:posts} = db.${5:posts}.where({ ${2:status}: ${2:status} }).order({ ${6:created_at}: \"desc\" }).limit(${7:6}).all()",
+      "  return ${4:posts}",
+      "}"
+    ],
+    "description": "Create an Axonyx query/data loader function"
+  },
+  "Action": {
+    "prefix": "ax-action",
+    "body": [
+      "action ${1:createPost}(${2:input}: ${3:CreatePostInput}) {",
+      "  guard(${2:input}.${4:title}, \"${5:Title is required}\")",
+      "  data ${6:post} = db.${7:posts}.insert(${2:input})",
+      "  refresh ${8:loadPosts}",
+      "  return ${6:post}",
+      "}"
+    ],
+    "description": "Create an Axonyx action/mutation function"
+  },
+  "Scope": {
+    "prefix": "ax-scope",
+    "body": [
+      "import { ${1:Layout} } from \"./page.ax\"",
+      "import * as ${2:Domain} from \"./domain.ax\"",
+      "",
+      "scope ${3:Blog}<${2:Domain}> {",
+      "  state ${4:theme}: ${5:Theme} = \"${6:silver}\"",
+      "",
+      "  render ${1}()",
+      "}"
+    ],
+    "description": "Create an Axonyx scope composition block"
   },
   "Import Component": {
     "prefix": "ax-import",
@@ -258,19 +326,21 @@
       "import { ContentGrid } from \"@axonyx/ui/foundry/ContentGrid.ax\"",
       "import { SectionCard } from \"@axonyx/ui/foundry/SectionCard.ax\"",
       "",
-      "page ${1:Home}",
+      "page ${1:Home}() {",
+      "  return ASX {",
+      "    <Head>",
+      "      <Title>${2:Axonyx}</Title>",
+      "    </Head>",
       "",
-      "<Head>",
-      "  <Title>${2:Axonyx}</Title>",
-      "</Head>",
-      "",
-      "<Container max=\"xl\">",
-      "  <ContentGrid cols={2} gap=\"lg\">",
-      "    <SectionCard title=\"${3:Section title}\">",
-      "      ${0}",
-      "    </SectionCard>",
-      "  </ContentGrid>",
-      "</Container>"
+      "    <Container max=\"xl\">",
+      "      <ContentGrid cols={2} gap=\"lg\">",
+      "        <SectionCard title=\"${3:Section title}\">",
+      "          ${0}",
+      "        </SectionCard>",
+      "      </ContentGrid>",
+      "    </Container>",
+      "  }",
+      "}"
     ],
     "description": "Create a page that starts with Foundry imports and layout"
   },

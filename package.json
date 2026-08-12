@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .ax files.",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -22,7 +22,8 @@
   ],
   "activationEvents": [
     "onLanguage:ax",
-    "onCommand:axonyx.runDiagnostics"
+    "onCommand:axonyx.runDiagnostics",
+    "onCommand:axonyx.formatDocument"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -60,6 +61,10 @@
       {
         "command": "axonyx.runDiagnostics",
         "title": "Axonyx: Run Diagnostics"
+      },
+      {
+        "command": "axonyx.formatDocument",
+        "title": "Axonyx: Format Document"
       }
     ]
   },
