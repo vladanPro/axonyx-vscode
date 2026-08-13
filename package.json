@@ -1,8 +1,8 @@
 {
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
-  "description": "VS Code language support for Axonyx .ax files.",
-  "version": "0.0.4",
+  "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
+  "version": "0.0.5",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -15,6 +15,7 @@
   ],
   "keywords": [
     "axonyx",
+    "asx",
     "ax",
     "rust",
     "framework",
@@ -35,6 +36,7 @@
           "ax"
         ],
         "extensions": [
+          ".asx",
           ".ax"
         ],
         "configuration": "./language-configuration.json",

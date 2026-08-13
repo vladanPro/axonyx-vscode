@@ -1,7 +1,7 @@
 # Axonyx VS Code Extension
 
 Syntax highlighting, snippets, diagnostics, and basic formatting for Axonyx
-`.ax` files.
+`.asx` frontend files and `.ax` backend files.
 
 ## MVP Scope
 
@@ -41,7 +41,7 @@ page Home() {
 
 1. Open this folder in VS Code.
 2. Run `Developer: Install Extension from Location...` and choose this repo folder.
-3. Open any `.ax` file.
+3. Open any `.asx` page/component or `.ax` backend file.
 
 If you are working inside the Axonyx repo family, the extension also looks for a local sibling `axonyx-framework` checkout and can run diagnostics through that source tree.
 
