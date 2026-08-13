@@ -14,7 +14,7 @@
       "  }",
       "}"
     ],
-    "description": "Create a Pages ASX V1 Axonyx page"
+    "description": "Create a function-shaped Pages V2 Axonyx page"
   },
   "Page With Data": {
     "prefix": "ax-page-data",
@@ -33,22 +33,18 @@
       "  }",
       "}"
     ],
-    "description": "Create a Pages ASX V1 page with a typed data binding"
+    "description": "Create a Pages V2 page with a typed data binding"
   },
   "Component": {
     "prefix": "ax-component",
     "body": [
-      "component ${1:ThemeSwitcher} {",
-      "  props {",
-      "    ${2:label}: String = \"${3:Theme}\"",
-      "  }",
-      "",
+      "component ${1:ThemeSwitcher}(${2:label}: String = \"${3:Theme}\") {",
       "  render ASX {",
       "    ${0}",
       "  }",
       "}"
     ],
-    "description": "Create a component-shaped Axonyx block"
+    "description": "Create a typed Pages V2 component"
   },
   "Query": {
     "prefix": "ax-query",
