@@ -103,35 +103,53 @@ const HOVER_DOCS = {
   "route.segments": "**route.segments**\n\nArray of path segments. Planned runtime context field."
 };
 
+let activeLanguageServer = null;
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Axonyx");
   const collection = vscode.languages.createDiagnosticCollection("axonyx");
   const runner = new AxonyxDiagnosticRunner(collection, output);
+  const languageServer = new AxonyxLanguageServer(collection, output, runner);
+  activeLanguageServer = languageServer;
 
   context.subscriptions.push(output, collection);
+  context.subscriptions.push({ dispose: () => languageServer.stop() });
   context.subscriptions.push(registerAxonyxCompletions());
   context.subscriptions.push(registerAxonyxHovers());
-  context.subscriptions.push(registerAxonyxFormatter());
+  context.subscriptions.push(registerAxonyxFormatter(languageServer));
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
-      runner.validate(document);
+      validateWithBestAvailableService(languageServer, runner, document);
+    }),
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (languageServer.running) {
+        languageServer.change(event.document);
+      }
     }),
   );
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((document) => {
-      runner.validate(document);
+      if (!languageServer.running) {
+        runner.validate(document);
+      }
     }),
   );
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((document) => {
       if (document.languageId === "ax") {
-        collection.delete(document.uri);
+        if (languageServer.running) {
+          languageServer.close(document);
+        } else {
+          collection.delete(document.uri);
+        }
       }
     }),
   );
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (editor) {
+      if (editor && !languageServer.running) {
         runner.validate(editor.document);
       }
     }),
@@ -140,6 +158,8 @@ function activate(context) {
     vscode.commands.registerCommand("axonyx.runDiagnostics", async () => {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
+        // An explicit run keeps the project-aware CLI checks available even
+        // while LSP V0 owns fast open-document parser diagnostics.
         await runner.validate(editor.document, true);
       }
     }),
@@ -150,12 +170,28 @@ function activate(context) {
     }),
   );
 
-  for (const document of vscode.workspace.textDocuments) {
+  languageServer.start().then((started) => {
+    for (const document of vscode.workspace.textDocuments) {
+      if (started) {
+        languageServer.open(document);
+      } else {
+        runner.validate(document);
+      }
+    }
+  });
+}
+
+function deactivate() {
+  return activeLanguageServer ? activeLanguageServer.stop() : undefined;
+}
+
+function validateWithBestAvailableService(languageServer, runner, document) {
+  if (languageServer.running) {
+    languageServer.open(document);
+  } else {
     runner.validate(document);
   }
 }
-
-function deactivate() {}
 
 function registerAxonyxCompletions() {
   return vscode.languages.registerCompletionItemProvider(
@@ -231,12 +267,28 @@ function registerAxonyxHovers() {
   );
 }
 
-function registerAxonyxFormatter() {
+function registerAxonyxFormatter(languageServer) {
   return vscode.languages.registerDocumentFormattingEditProvider(
     { language: "ax", scheme: "file" },
     {
-      provideDocumentFormattingEdits(document) {
-        const formatted = formatAxonyx(document.getText());
+      async provideDocumentFormattingEdits(document) {
+        let formatted;
+        if (languageServer.running) {
+          try {
+            const edits = await languageServer.format(document);
+            if (edits !== null) {
+              return edits;
+            }
+          } catch (_error) {
+            // The CLI path below keeps format-on-save available after an LSP crash.
+          }
+        }
+
+        try {
+          formatted = await runAxFormat(document);
+        } catch (_error) {
+          formatted = formatAxonyx(document.getText());
+        }
         if (formatted === document.getText()) {
           return [];
         }
@@ -343,6 +395,337 @@ function countStructuralChar(line, char) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+class AxonyxLanguageServer {
+  constructor(collection, output, fallbackRunner) {
+    this.collection = collection;
+    this.output = output;
+    this.fallbackRunner = fallbackRunner;
+    this.process = null;
+    this.running = false;
+    this.stopping = false;
+    this.buffer = Buffer.alloc(0);
+    this.nextRequestId = 1;
+    this.pendingRequests = new Map();
+  }
+
+  async start() {
+    const config = vscode.workspace.getConfiguration("axonyx");
+    if (!config.get("languageServer.enabled", true)) {
+      this.output.appendLine("[lsp] disabled by axonyx.languageServer.enabled");
+      return false;
+    }
+
+    const command = resolveLanguageServerCommand();
+    this.output.appendLine(`[lsp] starting ${command.command} ${command.args.join(" ")}`);
+    this.stopping = false;
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const settle = (value) => {
+        if (!settled) {
+          settled = true;
+          resolve(value);
+        }
+      };
+
+      try {
+        this.process = cp.spawn(command.command, command.args, {
+          cwd: command.cwd,
+          stdio: ["pipe", "pipe", "pipe"],
+          windowsHide: true,
+        });
+      } catch (error) {
+        this.output.appendLine(`[lsp] failed to spawn: ${String(error.message || error)}`);
+        settle(false);
+        return;
+      }
+
+      this.process.stdout.on("data", (chunk) => this.acceptOutput(chunk));
+      this.process.stderr.on("data", (chunk) => {
+        const message = chunk.toString().trimEnd();
+        if (message) this.output.appendLine(`[lsp] ${message}`);
+      });
+      this.process.once("error", (error) => {
+        this.output.appendLine(`[lsp] process error: ${String(error.message || error)}`);
+        this.rejectPending(error);
+        this.process = null;
+        this.running = false;
+        settle(false);
+      });
+      this.process.once("close", (code) => {
+        const wasRunning = this.running;
+        this.running = false;
+        this.process = null;
+        this.rejectPending(new Error(`axonyx-lsp exited with code ${code}`));
+        if (wasRunning && !this.stopping) {
+          this.output.appendLine(`[lsp] exited unexpectedly with code ${code}; using CLI fallback`);
+          vscode.window.showWarningMessage(
+            "Axonyx language server stopped. Diagnostics will use the CLI fallback.",
+          );
+          for (const document of vscode.workspace.textDocuments) {
+            this.fallbackRunner.validate(document);
+          }
+        }
+        settle(false);
+      });
+      this.process.once("spawn", async () => {
+        try {
+          await this.request(
+            "initialize",
+            {
+              processId: process.pid,
+              rootUri: workspaceRootUri(),
+              capabilities: {
+                general: { positionEncodings: ["utf-16"] },
+                textDocument: {
+                  synchronization: { dynamicRegistration: false },
+                  formatting: { dynamicRegistration: false },
+                },
+              },
+            },
+            120000,
+          );
+          this.running = true;
+          this.notify("initialized", {});
+          this.output.appendLine("[lsp] axonyx-lsp is ready");
+          settle(true);
+        } catch (error) {
+          this.output.appendLine(`[lsp] initialization failed: ${String(error.message || error)}`);
+          this.stop();
+          settle(false);
+        }
+      });
+    });
+  }
+
+  open(document) {
+    if (!this.running || !isAxonyxDocument(document)) return;
+    this.notify("textDocument/didOpen", {
+      textDocument: {
+        uri: document.uri.toString(),
+        languageId: "ax",
+        version: document.version,
+        text: document.getText(),
+      },
+    });
+  }
+
+  change(document) {
+    if (!this.running || !isAxonyxDocument(document)) return;
+    this.notify("textDocument/didChange", {
+      textDocument: { uri: document.uri.toString(), version: document.version },
+      contentChanges: [{ text: document.getText() }],
+    });
+  }
+
+  close(document) {
+    if (!this.running || !isAxonyxDocument(document)) return;
+    this.notify("textDocument/didClose", {
+      textDocument: { uri: document.uri.toString() },
+    });
+  }
+
+  async format(document) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const edits = await this.request("textDocument/formatting", {
+      textDocument: { uri: document.uri.toString() },
+      options: { tabSize: 2, insertSpaces: true },
+    });
+    if (!Array.isArray(edits)) return [];
+
+    return edits.map((edit) => {
+      const range = new vscode.Range(
+        edit.range.start.line,
+        edit.range.start.character,
+        edit.range.end.line,
+        edit.range.end.character,
+      );
+      return vscode.TextEdit.replace(range, edit.newText);
+    });
+  }
+
+  async stop() {
+    if (!this.process) return;
+    this.stopping = true;
+    const child = this.process;
+    if (this.running) {
+      try {
+        await this.request("shutdown", null, 1500);
+        this.notify("exit");
+      } catch (_error) {
+        child.kill();
+      }
+    } else {
+      child.kill();
+    }
+    this.running = false;
+  }
+
+  request(method, params, timeoutMs = 10000) {
+    const id = this.nextRequestId++;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`axonyx-lsp request timed out: ${method}`));
+      }, timeoutMs);
+      this.pendingRequests.set(id, { resolve, reject, timer });
+      try {
+        this.send({ jsonrpc: "2.0", id, method, params });
+      } catch (error) {
+        clearTimeout(timer);
+        this.pendingRequests.delete(id);
+        reject(error);
+      }
+    });
+  }
+
+  notify(method, params) {
+    const message = { jsonrpc: "2.0", method };
+    if (params !== undefined) message.params = params;
+    this.send(message);
+  }
+
+  send(message) {
+    if (!this.process || !this.process.stdin.writable) {
+      throw new Error("axonyx-lsp is not writable");
+    }
+    const body = Buffer.from(JSON.stringify(message), "utf8");
+    this.process.stdin.write(`Content-Length: ${body.length}\r\n\r\n`);
+    this.process.stdin.write(body);
+  }
+
+  acceptOutput(chunk) {
+    this.buffer = Buffer.concat([this.buffer, Buffer.from(chunk)]);
+    while (true) {
+      const headerEnd = this.buffer.indexOf("\r\n\r\n");
+      if (headerEnd < 0) return;
+      const header = this.buffer.subarray(0, headerEnd).toString("ascii");
+      const match = header.match(/(?:^|\r\n)Content-Length:\s*(\d+)/i);
+      if (!match) {
+        this.output.appendLine("[lsp] discarded response without Content-Length");
+        this.buffer = this.buffer.subarray(headerEnd + 4);
+        continue;
+      }
+      const length = Number(match[1]);
+      const bodyStart = headerEnd + 4;
+      const bodyEnd = bodyStart + length;
+      if (this.buffer.length < bodyEnd) return;
+
+      const body = this.buffer.subarray(bodyStart, bodyEnd).toString("utf8");
+      this.buffer = this.buffer.subarray(bodyEnd);
+      try {
+        this.handleMessage(JSON.parse(body));
+      } catch (error) {
+        this.output.appendLine(`[lsp] invalid response: ${String(error.message || error)}`);
+      }
+    }
+  }
+
+  handleMessage(message) {
+    if (Object.prototype.hasOwnProperty.call(message, "id")) {
+      const pending = this.pendingRequests.get(message.id);
+      if (!pending) return;
+      clearTimeout(pending.timer);
+      this.pendingRequests.delete(message.id);
+      if (message.error) {
+        pending.reject(new Error(message.error.message || "axonyx-lsp request failed"));
+      } else {
+        pending.resolve(message.result);
+      }
+      return;
+    }
+
+    if (message.method === "textDocument/publishDiagnostics") {
+      this.publishDiagnostics(message.params || {});
+    }
+  }
+
+  publishDiagnostics(params) {
+    if (!params.uri || !Array.isArray(params.diagnostics)) return;
+    const uri = vscode.Uri.parse(params.uri);
+    const diagnostics = params.diagnostics.map((diagnostic) => {
+      const range = new vscode.Range(
+        diagnostic.range.start.line,
+        diagnostic.range.start.character,
+        diagnostic.range.end.line,
+        diagnostic.range.end.character,
+      );
+      const item = new vscode.Diagnostic(
+        range,
+        diagnostic.message,
+        mapLspSeverity(diagnostic.severity),
+      );
+      item.source = diagnostic.source || "axonyx";
+      item.code = diagnostic.code;
+      return item;
+    });
+    const document = vscode.workspace.textDocuments.find(
+      (candidate) => candidate.uri.toString() === uri.toString(),
+    );
+    if (document) diagnostics.push(...getLocalValueDiagnostics(document));
+    this.collection.set(uri, diagnostics);
+  }
+
+  rejectPending(error) {
+    for (const pending of this.pendingRequests.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.pendingRequests.clear();
+  }
+}
+
+function isAxonyxDocument(document) {
+  return document.languageId === "ax" && document.uri.scheme === "file";
+}
+
+function workspaceRootUri() {
+  const folder = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0];
+  return folder ? folder.uri.toString() : null;
+}
+
+function mapLspSeverity(severity) {
+  switch (severity) {
+    case 2:
+      return vscode.DiagnosticSeverity.Warning;
+    case 3:
+      return vscode.DiagnosticSeverity.Information;
+    case 4:
+      return vscode.DiagnosticSeverity.Hint;
+    default:
+      return vscode.DiagnosticSeverity.Error;
+  }
+}
+
+function resolveLanguageServerCommand() {
+  const config = vscode.workspace.getConfiguration("axonyx");
+  const configuredPath = String(config.get("languageServer.path", "")).trim();
+  const workspaceFolder = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0];
+  const cwd = workspaceFolder ? workspaceFolder.uri.fsPath : process.cwd();
+  if (configuredPath) {
+    return { command: configuredPath, args: [], cwd };
+  }
+
+  const localFrameworkManifest = findLocalFrameworkManifest(cwd);
+  if (localFrameworkManifest) {
+    return {
+      command: "cargo",
+      args: [
+        "run",
+        "--quiet",
+        "--manifest-path",
+        localFrameworkManifest,
+        "--bin",
+        "axonyx-lsp",
+        "--",
+      ],
+      cwd,
+    };
+  }
+
+  return { command: "axonyx-lsp", args: [], cwd };
 }
 
 class AxonyxDiagnosticRunner {
@@ -455,6 +838,17 @@ async function runAxCheck(document) {
   return parsed.map((diagnostic) => toVsCodeDiagnostic(diagnostic));
 }
 
+async function runAxFormat(document) {
+  const command = resolveFormatCommand(document.uri.fsPath);
+  const { stdout, stderr, exitCode } = await execFile(command.command, command.args, {
+    cwd: command.cwd,
+  });
+  if (exitCode !== 0) {
+    throw new Error(stderr.trim() || "Axonyx formatter failed.");
+  }
+  return stdout;
+}
+
 function toVsCodeDiagnostic(diagnostic) {
   const line = Math.max((diagnostic.line || 1) - 1, 0);
   const column = Math.max((diagnostic.column || 1) - 1, 0);
@@ -512,6 +906,38 @@ function resolveCheckCommand(filePath) {
   };
 }
 
+function resolveFormatCommand(filePath) {
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath));
+  const cwd = workspaceFolder ? workspaceFolder.uri.fsPath : path.dirname(filePath);
+  const localFrameworkManifest = findLocalFrameworkManifest(cwd);
+
+  if (localFrameworkManifest) {
+    return {
+      command: "cargo",
+      args: [
+        "run",
+        "--quiet",
+        "--manifest-path",
+        localFrameworkManifest,
+        "--bin",
+        "cargo-ax",
+        "--",
+        "fmt",
+        "--file",
+        filePath,
+        "--stdout",
+      ],
+      cwd,
+    };
+  }
+
+  return {
+    command: "cargo",
+    args: ["ax", "fmt", "--file", filePath, "--stdout"],
+    cwd,
+  };
+}
+
 function findLocalFrameworkManifest(startDir) {
   let current = startDir;
 
@@ -556,4 +982,5 @@ module.exports = {
   activate,
   deactivate,
   formatAxonyx,
+  AxonyxLanguageServer,
 };
