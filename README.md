@@ -14,8 +14,8 @@ This version focuses on making modern Pages ASX files readable and pleasant in V
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
 - starter snippets for pages, data pages, components, scopes, queries, actions, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
 - newer Foundry snippets for `Form`, `FormGroup`, `Fieldset`, `Table`, `TableHead`, `TableCell`, `PaginationItem`, and layout primitives
-- parser-backed diagnostics through `cargo ax check` on open/save
-- basic document formatting through `Format Document` or `Axonyx: Format Document`
+- persistent parser-backed diagnostics through `axonyx-lsp` on open/change
+- compiler-owned formatting through `axonyx-lsp`, with a CLI fallback
 - distinct highlighting for typed props/parameters, bindings, function calls,
   runtime scopes, operators, and ASX component/HTML tags
 
@@ -43,13 +43,25 @@ page Home() {
 2. Run `Developer: Install Extension from Location...` and choose this repo folder.
 3. Open any `.asx` page/component or `.ax` backend file.
 
-If you are working inside the Axonyx repo family, the extension also looks for a local sibling `axonyx-framework` checkout and can run diagnostics through that source tree.
+If you are working inside the Axonyx repo family, the extension looks for a
+local sibling `axonyx-framework` checkout and launches its `axonyx-lsp` binary
+through Cargo. Otherwise it looks for `axonyx-lsp` on `PATH`.
 
 For published CLI diagnostics, install the current beta CLI:
 
 ```bash
 cargo install cargo-axonyx --force
 ```
+
+Until `axonyx-lsp` is published, contributors can install it from a framework
+checkout:
+
+```bash
+cargo install --path crates/axonyx-lsp
+```
+
+Use `axonyx.languageServer.path` to select an explicit binary, or set
+`axonyx.languageServer.enabled` to `false` to use the CLI diagnostics fallback.
 
 To format on save, enable VS Code formatting for Axonyx files:
 
@@ -70,8 +82,7 @@ Alternative dev flow:
 
 ## Next Good Steps
 
-- faster background diagnostics with a persistent checker process
-- `axonyx-lsp` as a Rust language server behind the extension
+- workspace import diagnostics through the persistent language server
 - Contract V1-backed component/prop completion and hover details
 - go-to-definition for local and `@axonyx/ui/...` imports
-- semantic formatting powered by the future `axonyx-lsp`
+- precise character spans instead of line-level parser diagnostics

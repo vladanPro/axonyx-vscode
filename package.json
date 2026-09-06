@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -27,6 +27,9 @@
     "onCommand:axonyx.formatDocument"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "test": "node --check extension.js && node scripts/lsp-client-smoke.js"
+  },
   "contributes": {
     "languages": [
       {
@@ -68,7 +71,23 @@
         "command": "axonyx.formatDocument",
         "title": "Axonyx: Format Document"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Axonyx",
+      "properties": {
+        "axonyx.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the persistent axonyx-lsp process for diagnostics and formatting when available."
+        },
+        "axonyx.languageServer.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "description": "Optional absolute path to the axonyx-lsp executable. Leave empty for local workspace or PATH discovery."
+        }
+      }
+    }
   },
   "repository": {
     "type": "git",
