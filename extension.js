@@ -117,6 +117,7 @@ function activate(context) {
   context.subscriptions.push(registerAxonyxCompletions());
   context.subscriptions.push(registerAxonyxHovers());
   context.subscriptions.push(registerAxonyxFormatter(languageServer));
+  context.subscriptions.push(registerAxonyxDefinitions(languageServer));
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       validateWithBestAvailableService(languageServer, runner, document);
@@ -299,6 +300,22 @@ function registerAxonyxFormatter(languageServer) {
         return [vscode.TextEdit.replace(fullRange, formatted)];
       }
     }
+  );
+}
+
+function registerAxonyxDefinitions(languageServer) {
+  return vscode.languages.registerDefinitionProvider(
+    { language: "ax", scheme: "file" },
+    {
+      async provideDefinition(document, position) {
+        if (!languageServer.running) return null;
+        try {
+          return await languageServer.definition(document, position);
+        } catch (_error) {
+          return null;
+        }
+      },
+    },
   );
 }
 
@@ -544,6 +561,23 @@ class AxonyxLanguageServer {
       );
       return vscode.TextEdit.replace(range, edit.newText);
     });
+  }
+
+  async definition(document, position) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const location = await this.request("textDocument/definition", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+    });
+    if (!location || !location.uri || !location.range) return null;
+
+    const range = new vscode.Range(
+      location.range.start.line,
+      location.range.start.character,
+      location.range.end.line,
+      location.range.end.character,
+    );
+    return new vscode.Location(vscode.Uri.parse(location.uri), range);
   }
 
   async stop() {

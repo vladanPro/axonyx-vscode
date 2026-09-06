@@ -18,14 +18,22 @@ class Diagnostic {
   }
 }
 
+class Location {
+  constructor(uri, range) {
+    this.uri = uri;
+    this.range = range;
+  }
+}
+
 const collectionWrites = [];
 const vscodeMock = {
   Diagnostic,
   DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+  Location,
   Range,
   Uri: {
     parse(value) {
-      return { toString: () => value };
+      return { value, toString: () => value };
     },
   },
   workspace: {
@@ -128,6 +136,39 @@ async function main() {
     line: 2,
     character: 0,
   });
+
+  const definitionWrites = [];
+  client.running = true;
+  client.process = {
+    stdin: {
+      writable: true,
+      write(value) {
+        definitionWrites.push(Buffer.from(value));
+      },
+    },
+  };
+  const document = {
+    languageId: "ax",
+    uri: { scheme: "file", toString: () => "file:///workspace/app/page.asx" },
+  };
+  const definition = client.definition(document, { line: 0, character: 28 });
+  assert.ok(Buffer.concat(definitionWrites).includes(Buffer.from("textDocument/definition")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 1,
+    result: {
+      uri: "file:///workspace/app/components/Card.asx",
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    },
+  }));
+  const location = await definition;
+  assert.strictEqual(location.uri.toString(), "file:///workspace/app/components/Card.asx");
+  assert.deepStrictEqual(location.range.start, { line: 0, character: 0 });
+  client.running = false;
+  client.process = null;
 }
 
 main().catch((error) => {
