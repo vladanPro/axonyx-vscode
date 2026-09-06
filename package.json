@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -78,7 +78,7 @@
         "axonyx.languageServer.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Use the persistent axonyx-lsp process for diagnostics and formatting when available."
+          "description": "Use the persistent axonyx-lsp process for diagnostics, formatting, and import navigation when available."
         },
         "axonyx.languageServer.path": {
           "type": "string",
