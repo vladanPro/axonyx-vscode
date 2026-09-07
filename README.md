@@ -80,9 +80,13 @@ Alternative dev flow:
 2. Package the extension: `vsce package`
 3. Install the generated `.vsix` in VS Code.
 
-## Next Good Steps
+## Language Server Support
 
-- workspace import diagnostics through the persistent language server
-- Contract V1-backed component/prop completion and hover details
-- go-to-definition for local and `@axonyx/ui/...` imports
-- precise character spans instead of line-level parser diagnostics
+- persistent parser and workspace import diagnostics
+- compiler-owned formatting and symbol-aware go-to-definition
+- compiler-owned hover for local, imported, aliased, and namespace symbols
+- completion for local declarations, imported components, and namespace members
+- lightweight Foundry prop/value suggestions when the language server has no result
+
+Next: precise parser spans, documentation comments, prop-contract completion,
+and workspace-wide references.

@@ -25,12 +25,41 @@ class Location {
   }
 }
 
+class CompletionItem {
+  constructor(label, kind) {
+    this.label = label;
+    this.kind = kind;
+  }
+}
+
+class MarkdownString {
+  constructor(value) {
+    this.value = value;
+  }
+}
+
+class Hover {
+  constructor(contents, range) {
+    this.contents = contents;
+    this.range = range;
+  }
+}
+
 const collectionWrites = [];
 const vscodeMock = {
+  CompletionItem,
+  CompletionItemKind: { Text: 0, Function: 2, Class: 6, Module: 8, Reference: 17, Struct: 21 },
   Diagnostic,
   DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+  Hover,
   Location,
+  MarkdownString,
   Range,
+  TextEdit: {
+    replace(range, newText) {
+      return { range, newText };
+    },
+  },
   Uri: {
     parse(value) {
       return { value, toString: () => value };
@@ -167,6 +196,56 @@ async function main() {
   const location = await definition;
   assert.strictEqual(location.uri.toString(), "file:///workspace/app/components/Card.asx");
   assert.deepStrictEqual(location.range.start, { line: 0, character: 0 });
+
+  const completionWrites = [];
+  client.process.stdin.write = (value) => completionWrites.push(Buffer.from(value));
+  const completion = client.completion(document, { line: 2, character: 33 });
+  assert.ok(Buffer.concat(completionWrites).includes(Buffer.from("textDocument/completion")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 2,
+    result: [{
+      label: "Panel",
+      kind: 7,
+      detail: "component Card (imported from @/components/Card)",
+      documentation: { kind: "markdown", value: "```ax\ncomponent Card\n```" },
+      sortText: "1-panel",
+      filterText: "Panel",
+      textEdit: {
+        range: {
+          start: { line: 2, character: 30 },
+          end: { line: 2, character: 33 },
+        },
+        newText: "Panel",
+      },
+    }],
+  }));
+  const completionItems = await completion;
+  assert.strictEqual(completionItems.length, 1);
+  assert.strictEqual(completionItems[0].label, "Panel");
+  assert.strictEqual(completionItems[0].kind, vscodeMock.CompletionItemKind.Class);
+  assert.strictEqual(completionItems[0].documentation.value, "```ax\ncomponent Card\n```");
+  assert.strictEqual(completionItems[0].textEdit.newText, "Panel");
+  assert.deepStrictEqual(completionItems[0].textEdit.range.start, { line: 2, character: 30 });
+
+  const hoverWrites = [];
+  client.process.stdin.write = (value) => hoverWrites.push(Buffer.from(value));
+  const hover = client.hover(document, { line: 2, character: 31 });
+  assert.ok(Buffer.concat(hoverWrites).includes(Buffer.from("textDocument/hover")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 3,
+    result: {
+      contents: { kind: "markdown", value: "```ax\ncomponent Card\n```" },
+      range: {
+        start: { line: 2, character: 28 },
+        end: { line: 2, character: 33 },
+      },
+    },
+  }));
+  const hoverResult = await hover;
+  assert.strictEqual(hoverResult.contents.value, "```ax\ncomponent Card\n```");
+  assert.deepStrictEqual(hoverResult.range.end, { line: 2, character: 33 });
   client.running = false;
   client.process = null;
 }
