@@ -114,8 +114,8 @@ function activate(context) {
 
   context.subscriptions.push(output, collection);
   context.subscriptions.push({ dispose: () => languageServer.stop() });
-  context.subscriptions.push(registerAxonyxCompletions());
-  context.subscriptions.push(registerAxonyxHovers());
+  context.subscriptions.push(registerAxonyxCompletions(languageServer));
+  context.subscriptions.push(registerAxonyxHovers(languageServer));
   context.subscriptions.push(registerAxonyxFormatter(languageServer));
   context.subscriptions.push(registerAxonyxDefinitions(languageServer));
   context.subscriptions.push(
@@ -194,11 +194,20 @@ function validateWithBestAvailableService(languageServer, runner, document) {
   }
 }
 
-function registerAxonyxCompletions() {
+function registerAxonyxCompletions(languageServer) {
   return vscode.languages.registerCompletionItemProvider(
     { language: "ax", scheme: "file" },
     {
-      provideCompletionItems(document, position) {
+      async provideCompletionItems(document, position) {
+        if (languageServer.running) {
+          try {
+            const items = await languageServer.completion(document, position);
+            if (items && items.length > 0) return items;
+          } catch (_error) {
+            // Keep the lightweight Foundry/keyword suggestions after an LSP failure.
+          }
+        }
+
         const linePrefix = document.lineAt(position).text.slice(0, position.character);
 
         if (/route\.$/.test(linePrefix)) {
@@ -252,11 +261,20 @@ function registerAxonyxCompletions() {
   );
 }
 
-function registerAxonyxHovers() {
+function registerAxonyxHovers(languageServer) {
   return vscode.languages.registerHoverProvider(
     { language: "ax", scheme: "file" },
     {
-      provideHover(document, position) {
+      async provideHover(document, position) {
+        if (languageServer.running) {
+          try {
+            const hover = await languageServer.hover(document, position);
+            if (hover) return hover;
+          } catch (_error) {
+            // Static Foundry documentation remains useful if the LSP cannot answer.
+          }
+        }
+
         const range = document.getWordRangeAtPosition(position, /[A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)?/);
         if (!range) return null;
         const word = document.getText(range);
@@ -580,6 +598,66 @@ class AxonyxLanguageServer {
     return new vscode.Location(vscode.Uri.parse(location.uri), range);
   }
 
+  async completion(document, position) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const items = await this.request("textDocument/completion", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+    });
+    if (!Array.isArray(items)) return [];
+
+    return items.map((source) => {
+      const item = new vscode.CompletionItem(
+        source.label,
+        mapLspCompletionKind(source.kind),
+      );
+      if (source.detail) item.detail = source.detail;
+      if (source.documentation) {
+        const value = typeof source.documentation === "string"
+          ? source.documentation
+          : source.documentation.value;
+        if (value) item.documentation = new vscode.MarkdownString(value);
+      }
+      if (source.sortText) item.sortText = source.sortText;
+      if (source.filterText) item.filterText = source.filterText;
+      if (source.textEdit && source.textEdit.range) {
+        const range = new vscode.Range(
+          source.textEdit.range.start.line,
+          source.textEdit.range.start.character,
+          source.textEdit.range.end.line,
+          source.textEdit.range.end.character,
+        );
+        item.textEdit = vscode.TextEdit.replace(range, source.textEdit.newText);
+      } else if (source.insertText) {
+        item.insertText = source.insertText;
+      }
+      return item;
+    });
+  }
+
+  async hover(document, position) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const source = await this.request("textDocument/hover", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+    });
+    if (!source || !source.contents) return null;
+
+    const value = typeof source.contents === "string"
+      ? source.contents
+      : source.contents.value;
+    if (!value) return null;
+    const range = source.range
+      ? new vscode.Range(
+          source.range.start.line,
+          source.range.start.character,
+          source.range.end.line,
+          source.range.end.character,
+        )
+      : undefined;
+    return new vscode.Hover(new vscode.MarkdownString(value), range);
+  }
+
   async stop() {
     if (!this.process) return;
     this.stopping = true;
@@ -730,6 +808,23 @@ function mapLspSeverity(severity) {
       return vscode.DiagnosticSeverity.Hint;
     default:
       return vscode.DiagnosticSeverity.Error;
+  }
+}
+
+function mapLspCompletionKind(kind) {
+  switch (kind) {
+    case 3:
+      return vscode.CompletionItemKind.Function;
+    case 7:
+      return vscode.CompletionItemKind.Class;
+    case 9:
+      return vscode.CompletionItemKind.Module;
+    case 18:
+      return vscode.CompletionItemKind.Reference;
+    case 22:
+      return vscode.CompletionItemKind.Struct;
+    default:
+      return vscode.CompletionItemKind.Text;
   }
 }
 
