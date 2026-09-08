@@ -85,8 +85,9 @@ Alternative dev flow:
 - persistent parser and workspace import diagnostics
 - compiler-owned formatting and symbol-aware go-to-definition
 - compiler-owned hover for local, imported, aliased, and namespace symbols
-- completion for local declarations, imported components, and namespace members
+- completion for local declarations, imported components, namespace members,
+  typed component props, and literal-union prop values
 - lightweight Foundry prop/value suggestions when the language server has no result
 
-Next: precise parser spans, documentation comments, prop-contract completion,
-and workspace-wide references.
+Next: precise parser spans, documentation comments, tolerant completion for
+in-progress local declarations, and workspace-wide references.
