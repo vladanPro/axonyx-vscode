@@ -63,13 +63,15 @@ cargo install --path crates/axonyx-lsp
 Use `axonyx.languageServer.path` to select an explicit binary, or set
 `axonyx.languageServer.enabled` to `false` to use the CLI diagnostics fallback.
 
-To format on save, enable VS Code formatting for Axonyx files:
+The extension automatically becomes the default formatter for Axonyx files.
+Use `Shift+Alt+F` (Format Document) to format the active `.asx` or `.ax` file.
+
+To also format on save, enable the standard VS Code setting for Axonyx files:
 
 ```json
 {
   "[ax]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "vladanpro.axonyx-vscode"
+    "editor.formatOnSave": true
   }
 }
 ```

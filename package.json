@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -28,9 +28,14 @@
   ],
   "main": "./extension.js",
   "scripts": {
-    "test": "node --check extension.js && node scripts/lsp-client-smoke.js"
+    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js"
   },
   "contributes": {
+    "configurationDefaults": {
+      "[ax]": {
+        "editor.defaultFormatter": "vladanpro.axonyx-vscode"
+      }
+    },
     "languages": [
       {
         "id": "ax",
