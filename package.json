@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",

@@ -118,6 +118,8 @@ function activate(context) {
   context.subscriptions.push(registerAxonyxHovers(languageServer));
   context.subscriptions.push(registerAxonyxFormatter(languageServer));
   context.subscriptions.push(registerAxonyxDefinitions(languageServer));
+  context.subscriptions.push(registerAxonyxReferences(languageServer));
+  context.subscriptions.push(registerAxonyxRename(languageServer));
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       validateWithBestAvailableService(languageServer, runner, document);
@@ -337,6 +339,42 @@ function registerAxonyxDefinitions(languageServer) {
   );
 }
 
+function registerAxonyxReferences(languageServer) {
+  return vscode.languages.registerReferenceProvider(
+    { language: "ax", scheme: "file" },
+    {
+      async provideReferences(document, position, context) {
+        if (!languageServer.running) return [];
+        try {
+          return await languageServer.references(
+            document,
+            position,
+            context.includeDeclaration,
+          );
+        } catch (_error) {
+          return [];
+        }
+      },
+    },
+  );
+}
+
+function registerAxonyxRename(languageServer) {
+  return vscode.languages.registerRenameProvider(
+    { language: "ax", scheme: "file" },
+    {
+      async prepareRename(document, position) {
+        if (!languageServer.running) return null;
+        return languageServer.prepareRename(document, position);
+      },
+      async provideRenameEdits(document, position, newName) {
+        if (!languageServer.running) return null;
+        return languageServer.rename(document, position, newName);
+      },
+    },
+  );
+}
+
 function formatAxonyx(text) {
   const normalized = text.replace(/\r\n/g, "\n");
   const lines = normalized.split("\n");
@@ -517,6 +555,8 @@ class AxonyxLanguageServer {
                 textDocument: {
                   synchronization: { dynamicRegistration: false },
                   formatting: { dynamicRegistration: false },
+                  references: { dynamicRegistration: false },
+                  rename: { dynamicRegistration: false, prepareSupport: true },
                 },
               },
             },
@@ -596,6 +636,48 @@ class AxonyxLanguageServer {
       location.range.end.character,
     );
     return new vscode.Location(vscode.Uri.parse(location.uri), range);
+  }
+
+  async references(document, position, includeDeclaration = true) {
+    if (!this.running || !isAxonyxDocument(document)) return [];
+    const locations = await this.request("textDocument/references", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+      context: { includeDeclaration },
+    });
+    if (!Array.isArray(locations)) return [];
+    return locations.map((location) => lspLocation(location)).filter(Boolean);
+  }
+
+  async prepareRename(document, position) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const source = await this.request("textDocument/prepareRename", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+    });
+    if (!source || !source.range) return null;
+    return {
+      range: lspRange(source.range),
+      placeholder: source.placeholder,
+    };
+  }
+
+  async rename(document, position, newName) {
+    if (!this.running || !isAxonyxDocument(document)) return null;
+    const source = await this.request("textDocument/rename", {
+      textDocument: { uri: document.uri.toString() },
+      position: { line: position.line, character: position.character },
+      newName,
+    });
+    if (!source || !source.changes) return null;
+
+    const edit = new vscode.WorkspaceEdit();
+    for (const [uri, edits] of Object.entries(source.changes)) {
+      for (const item of edits) {
+        edit.replace(vscode.Uri.parse(uri), lspRange(item.range), item.newText);
+      }
+    }
+    return edit;
   }
 
   async completion(document, position) {
@@ -794,6 +876,20 @@ class AxonyxLanguageServer {
     }
     this.pendingRequests.clear();
   }
+}
+
+function lspRange(range) {
+  return new vscode.Range(
+    range.start.line,
+    range.start.character,
+    range.end.line,
+    range.end.character,
+  );
+}
+
+function lspLocation(location) {
+  if (!location || !location.uri || !location.range) return null;
+  return new vscode.Location(vscode.Uri.parse(location.uri), lspRange(location.range));
 }
 
 function isAxonyxDocument(document) {

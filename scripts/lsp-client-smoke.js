@@ -51,6 +51,16 @@ class Hover {
   }
 }
 
+class WorkspaceEdit {
+  constructor() {
+    this.entries = [];
+  }
+
+  replace(uri, range, newText) {
+    this.entries.push({ uri, range, newText });
+  }
+}
+
 const collectionWrites = [];
 const vscodeMock = {
   CompletionItem,
@@ -76,6 +86,7 @@ const vscodeMock = {
       return { range, newText };
     },
   },
+  WorkspaceEdit,
   Uri: {
     parse(value) {
       return { value, toString: () => value };
@@ -290,6 +301,71 @@ async function main() {
   const hoverResult = await hover;
   assert.strictEqual(hoverResult.contents.value, "```ax\ncomponent Card\n```");
   assert.deepStrictEqual(hoverResult.range.end, { line: 2, character: 33 });
+
+  const referenceWrites = [];
+  client.process.stdin.write = (value) => referenceWrites.push(Buffer.from(value));
+  const references = client.references(document, { line: 2, character: 31 }, true);
+  assert.ok(Buffer.concat(referenceWrites).includes(Buffer.from("textDocument/references")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 5,
+    result: [{
+      uri: "file:///workspace/app/components/Card.asx",
+      range: {
+        start: { line: 0, character: 10 },
+        end: { line: 0, character: 14 },
+      },
+    }],
+  }));
+  const referenceResults = await references;
+  assert.strictEqual(referenceResults.length, 1);
+  assert.strictEqual(
+    referenceResults[0].uri.toString(),
+    "file:///workspace/app/components/Card.asx",
+  );
+
+  const prepareWrites = [];
+  client.process.stdin.write = (value) => prepareWrites.push(Buffer.from(value));
+  const prepareRename = client.prepareRename(document, { line: 2, character: 31 });
+  assert.ok(Buffer.concat(prepareWrites).includes(Buffer.from("textDocument/prepareRename")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 6,
+    result: {
+      range: {
+        start: { line: 2, character: 28 },
+        end: { line: 2, character: 33 },
+      },
+      placeholder: "Panel",
+    },
+  }));
+  const prepared = await prepareRename;
+  assert.strictEqual(prepared.placeholder, "Panel");
+  assert.deepStrictEqual(prepared.range.start, { line: 2, character: 28 });
+
+  const renameWrites = [];
+  client.process.stdin.write = (value) => renameWrites.push(Buffer.from(value));
+  const rename = client.rename(document, { line: 2, character: 31 }, "Tile");
+  assert.ok(Buffer.concat(renameWrites).includes(Buffer.from("textDocument/rename")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 7,
+    result: {
+      changes: {
+        "file:///workspace/app/page.asx": [{
+          range: {
+            start: { line: 2, character: 28 },
+            end: { line: 2, character: 33 },
+          },
+          newText: "Tile",
+        }],
+      },
+    },
+  }));
+  const renameEdit = await rename;
+  assert.strictEqual(renameEdit.entries.length, 1);
+  assert.strictEqual(renameEdit.entries[0].newText, "Tile");
+  assert.deepStrictEqual(renameEdit.entries[0].range.end, { line: 2, character: 33 });
   client.running = false;
   client.process = null;
 }
