@@ -627,9 +627,16 @@ class AxonyxLanguageServer {
           source.textEdit.range.end.line,
           source.textEdit.range.end.character,
         );
-        item.textEdit = vscode.TextEdit.replace(range, source.textEdit.newText);
+        if (source.insertTextFormat === 2) {
+          item.insertText = new vscode.SnippetString(source.textEdit.newText);
+          item.range = range;
+        } else {
+          item.textEdit = vscode.TextEdit.replace(range, source.textEdit.newText);
+        }
       } else if (source.insertText) {
-        item.insertText = source.insertText;
+        item.insertText = source.insertTextFormat === 2
+          ? new vscode.SnippetString(source.insertText)
+          : source.insertText;
       }
       return item;
     });
@@ -819,6 +826,10 @@ function mapLspCompletionKind(kind) {
       return vscode.CompletionItemKind.Class;
     case 9:
       return vscode.CompletionItemKind.Module;
+    case 10:
+      return vscode.CompletionItemKind.Property;
+    case 12:
+      return vscode.CompletionItemKind.Value;
     case 18:
       return vscode.CompletionItemKind.Reference;
     case 22:

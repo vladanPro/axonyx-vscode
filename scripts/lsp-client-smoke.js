@@ -38,6 +38,12 @@ class MarkdownString {
   }
 }
 
+class SnippetString {
+  constructor(value) {
+    this.value = value;
+  }
+}
+
 class Hover {
   constructor(contents, range) {
     this.contents = contents;
@@ -48,13 +54,23 @@ class Hover {
 const collectionWrites = [];
 const vscodeMock = {
   CompletionItem,
-  CompletionItemKind: { Text: 0, Function: 2, Class: 6, Module: 8, Reference: 17, Struct: 21 },
+  CompletionItemKind: {
+    Text: 0,
+    Function: 2,
+    Class: 6,
+    Module: 8,
+    Property: 9,
+    Value: 11,
+    Reference: 17,
+    Struct: 21,
+  },
   Diagnostic,
   DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
   Hover,
   Location,
   MarkdownString,
   Range,
+  SnippetString,
   TextEdit: {
     replace(range, newText) {
       return { range, newText };
@@ -228,13 +244,41 @@ async function main() {
   assert.strictEqual(completionItems[0].textEdit.newText, "Panel");
   assert.deepStrictEqual(completionItems[0].textEdit.range.start, { line: 2, character: 30 });
 
+  const propCompletionWrites = [];
+  client.process.stdin.write = (value) => propCompletionWrites.push(Buffer.from(value));
+  const propCompletion = client.completion(document, { line: 3, character: 4 });
+  assert.ok(Buffer.concat(propCompletionWrites).includes(Buffer.from("textDocument/completion")));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 3,
+    result: [{
+      label: "variant",
+      kind: 10,
+      detail: "optional prop: variant: primary | ghost",
+      insertTextFormat: 2,
+      textEdit: {
+        range: {
+          start: { line: 3, character: 2 },
+          end: { line: 3, character: 4 },
+        },
+        newText: "variant=\"$1\"",
+      },
+    }],
+  }));
+  const propCompletionItems = await propCompletion;
+  assert.strictEqual(propCompletionItems.length, 1);
+  assert.strictEqual(propCompletionItems[0].kind, vscodeMock.CompletionItemKind.Property);
+  assert.strictEqual(propCompletionItems[0].insertText.value, "variant=\"$1\"");
+  assert.deepStrictEqual(propCompletionItems[0].range.start, { line: 3, character: 2 });
+  assert.strictEqual(propCompletionItems[0].textEdit, undefined);
+
   const hoverWrites = [];
   client.process.stdin.write = (value) => hoverWrites.push(Buffer.from(value));
   const hover = client.hover(document, { line: 2, character: 31 });
   assert.ok(Buffer.concat(hoverWrites).includes(Buffer.from("textDocument/hover")));
   client.acceptOutput(frame({
     jsonrpc: "2.0",
-    id: 3,
+    id: 4,
     result: {
       contents: { kind: "markdown", value: "```ax\ncomponent Card\n```" },
       range: {
