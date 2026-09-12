@@ -120,6 +120,8 @@ function activate(context) {
   context.subscriptions.push(registerAxonyxDefinitions(languageServer));
   context.subscriptions.push(registerAxonyxReferences(languageServer));
   context.subscriptions.push(registerAxonyxRename(languageServer));
+  context.subscriptions.push(registerAxonyxDocumentSymbols(languageServer));
+  context.subscriptions.push(registerAxonyxWorkspaceSymbols(languageServer));
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       validateWithBestAvailableService(languageServer, runner, document);
@@ -375,6 +377,35 @@ function registerAxonyxRename(languageServer) {
   );
 }
 
+function registerAxonyxDocumentSymbols(languageServer) {
+  return vscode.languages.registerDocumentSymbolProvider(
+    { language: "ax", scheme: "file" },
+    {
+      async provideDocumentSymbols(document) {
+        if (!languageServer.running) return [];
+        try {
+          return await languageServer.documentSymbols(document);
+        } catch (_error) {
+          return [];
+        }
+      },
+    },
+  );
+}
+
+function registerAxonyxWorkspaceSymbols(languageServer) {
+  return vscode.languages.registerWorkspaceSymbolProvider({
+    async provideWorkspaceSymbols(query) {
+      if (!languageServer.running) return [];
+      try {
+        return await languageServer.workspaceSymbols(query);
+      } catch (_error) {
+        return [];
+      }
+    },
+  });
+}
+
 function formatAxonyx(text) {
   const normalized = text.replace(/\r\n/g, "\n");
   const lines = normalized.split("\n");
@@ -557,7 +588,12 @@ class AxonyxLanguageServer {
                   formatting: { dynamicRegistration: false },
                   references: { dynamicRegistration: false },
                   rename: { dynamicRegistration: false, prepareSupport: true },
+                  documentSymbol: {
+                    dynamicRegistration: false,
+                    hierarchicalDocumentSymbolSupport: true,
+                  },
                 },
+                workspace: { symbol: { dynamicRegistration: false } },
               },
             },
             120000,
@@ -678,6 +714,42 @@ class AxonyxLanguageServer {
       }
     }
     return edit;
+  }
+
+  async documentSymbols(document) {
+    if (!this.running || !isAxonyxDocument(document)) return [];
+    const sources = await this.request("textDocument/documentSymbol", {
+      textDocument: { uri: document.uri.toString() },
+    });
+    if (!Array.isArray(sources)) return [];
+
+    return sources.map((source) => {
+      if (!source || !source.range || !source.selectionRange) return null;
+      return new vscode.DocumentSymbol(
+        source.name,
+        source.detail || "",
+        mapLspSymbolKind(source.kind),
+        lspRange(source.range),
+        lspRange(source.selectionRange),
+      );
+    }).filter(Boolean);
+  }
+
+  async workspaceSymbols(query) {
+    if (!this.running) return [];
+    const sources = await this.request("workspace/symbol", { query });
+    if (!Array.isArray(sources)) return [];
+
+    return sources.map((source) => {
+      const location = lspLocation(source && source.location);
+      if (!source || !location) return null;
+      return new vscode.SymbolInformation(
+        source.name,
+        mapLspSymbolKind(source.kind),
+        source.containerName || "",
+        location,
+      );
+    }).filter(Boolean);
   }
 
   async completion(document, position) {
@@ -933,6 +1005,13 @@ function mapLspCompletionKind(kind) {
     default:
       return vscode.CompletionItemKind.Text;
   }
+}
+
+function mapLspSymbolKind(kind) {
+  if (Number.isInteger(kind) && kind >= 1 && kind <= 26) {
+    return kind - 1;
+  }
+  return vscode.SymbolKind.Variable;
 }
 
 function resolveLanguageServerCommand() {
