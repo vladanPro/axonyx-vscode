@@ -25,6 +25,25 @@ class Location {
   }
 }
 
+class DocumentSymbol {
+  constructor(name, detail, kind, range, selectionRange) {
+    this.name = name;
+    this.detail = detail;
+    this.kind = kind;
+    this.range = range;
+    this.selectionRange = selectionRange;
+  }
+}
+
+class SymbolInformation {
+  constructor(name, kind, containerName, location) {
+    this.name = name;
+    this.kind = kind;
+    this.containerName = containerName;
+    this.location = location;
+  }
+}
+
 class CompletionItem {
   constructor(label, kind) {
     this.label = label;
@@ -76,11 +95,14 @@ const vscodeMock = {
   },
   Diagnostic,
   DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+  DocumentSymbol,
   Hover,
   Location,
   MarkdownString,
   Range,
   SnippetString,
+  SymbolInformation,
+  SymbolKind: { Variable: 12 },
   TextEdit: {
     replace(range, newText) {
       return { range, newText };
@@ -366,6 +388,70 @@ async function main() {
   assert.strictEqual(renameEdit.entries.length, 1);
   assert.strictEqual(renameEdit.entries[0].newText, "Tile");
   assert.deepStrictEqual(renameEdit.entries[0].range.end, { line: 2, character: 33 });
+
+  const documentSymbolWrites = [];
+  client.process.stdin.write = (value) => documentSymbolWrites.push(Buffer.from(value));
+  const documentSymbols = client.documentSymbols(document);
+  assert.ok(
+    Buffer.concat(documentSymbolWrites).includes(Buffer.from("textDocument/documentSymbol")),
+  );
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 8,
+    result: [{
+      name: "Dashboard",
+      detail: "page Dashboard()",
+      kind: 12,
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 18 },
+      },
+      selectionRange: {
+        start: { line: 0, character: 5 },
+        end: { line: 0, character: 14 },
+      },
+    }],
+  }));
+  const documentSymbolResults = await documentSymbols;
+  assert.strictEqual(documentSymbolResults.length, 1);
+  assert.strictEqual(documentSymbolResults[0].name, "Dashboard");
+  assert.strictEqual(documentSymbolResults[0].detail, "page Dashboard()");
+  assert.strictEqual(documentSymbolResults[0].kind, 11);
+  assert.deepStrictEqual(documentSymbolResults[0].selectionRange.start, {
+    line: 0,
+    character: 5,
+  });
+
+  const workspaceSymbolWrites = [];
+  client.process.stdin.write = (value) => workspaceSymbolWrites.push(Buffer.from(value));
+  const workspaceSymbols = client.workspaceSymbols("dash");
+  const workspaceSymbolRequest = Buffer.concat(workspaceSymbolWrites);
+  assert.ok(workspaceSymbolRequest.includes(Buffer.from("workspace/symbol")));
+  assert.ok(workspaceSymbolRequest.includes(Buffer.from('"query":"dash"')));
+  client.acceptOutput(frame({
+    jsonrpc: "2.0",
+    id: 9,
+    result: [{
+      name: "Dashboard",
+      kind: 12,
+      containerName: "app/dashboard/page.asx",
+      location: {
+        uri: "file:///workspace/app/dashboard/page.asx",
+        range: {
+          start: { line: 0, character: 5 },
+          end: { line: 0, character: 14 },
+        },
+      },
+    }],
+  }));
+  const workspaceSymbolResults = await workspaceSymbols;
+  assert.strictEqual(workspaceSymbolResults.length, 1);
+  assert.strictEqual(workspaceSymbolResults[0].name, "Dashboard");
+  assert.strictEqual(workspaceSymbolResults[0].containerName, "app/dashboard/page.asx");
+  assert.strictEqual(
+    workspaceSymbolResults[0].location.uri.toString(),
+    "file:///workspace/app/dashboard/page.asx",
+  );
   client.running = false;
   client.process = null;
 }
