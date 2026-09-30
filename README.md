@@ -95,3 +95,15 @@ Alternative dev flow:
 
 Next: precise parser spans, documentation comments, and richer scope-aware
 refactoring for local bindings and parameters.
+
+## Foundry file icons
+
+Select **Preferences: File Icon Theme > Axonyx Foundry** for gold `.asx`
+frontend icons and silver `.ax` backend icons. Both retain language ID `ax`,
+so diagnostics, formatting, snippets, and existing editor settings keep working.
+Light editor themes use darker variants for contrast. VS Code allows one file
+icon theme at a time: selecting this theme replaces the current file icon set.
+Other file types retain language-provided icons where available; this theme
+intentionally provides no complete generic file/folder icon collection.
+If another icon theme is active, its mappings take precedence; language fallback
+uses the silver X for both extensions. The extension does not change your theme.
