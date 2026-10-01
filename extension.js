@@ -4,6 +4,7 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { addIconsToMaterialTheme } = require("./material-icons");
 
 const COMPONENTS = [
   "Head", "Title", "Theme", "Meta", "Link", "Script", "Container", "Grid", "Slot",
@@ -172,6 +173,18 @@ function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("axonyx.formatDocument", async () => {
       await vscode.commands.executeCommand("editor.action.formatDocument");
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("axonyx.addIconsToMaterialTheme", async () => {
+      try {
+        await addIconsToMaterialTheme(vscode, context.extensionPath);
+        vscode.window.showInformationMessage(
+          "Axonyx .asx and .ax icons added to Material Icon Theme. Keep Material Icon Theme selected to see them.",
+        );
+      } catch (error) {
+        vscode.window.showErrorMessage(`Axonyx icons: ${error.message}`);
+      }
     }),
   );
 

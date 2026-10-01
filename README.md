@@ -98,6 +98,17 @@ refactoring for local bindings and parameters.
 
 ## Foundry file icons
 
+If you use **Material Icon Theme**, keep it selected and run
+**Axonyx: Add Icons to Material Icon Theme** from the Command Palette. This
+opt-in command adds the bronze `.asx` and silver `.ax` SVGs while preserving
+Material's other file and folder icons and your existing custom associations.
+It requires Material Icon Theme to be installed. It updates your user settings
+and keeps a version-independent copy of the SVGs under your VS Code extensions
+directory. Run it again after an Axonyx icon redesign to refresh those copies.
+
+The separate **Axonyx Foundry** icon theme is a minimal alternative. It does
+not include a full icon set for other file types or folders.
+
 Select **Preferences: File Icon Theme > Axonyx Foundry** for bronze `.asx`
 frontend icons and silver `.ax` backend icons. Both retain language ID `ax`,
 so diagnostics, formatting, snippets, and existing editor settings keep working.
