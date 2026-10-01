@@ -25,6 +25,10 @@ assert.ok(contribution, "Foundry icon theme must be contributed");
 const themePath = path.resolve(__dirname, "..", contribution.path);
 const theme = JSON.parse(fs.readFileSync(themePath, "utf8"));
 assert.notStrictEqual(theme.fileExtensions.asx, theme.fileExtensions.ax);
+assert.strictEqual(theme.fileExtensions.asx, "bronze");
+assert.strictEqual(theme.fileExtensions.ax, "silver");
+assert.strictEqual(theme.light.fileExtensions.asx, "bronze-light");
+assert.strictEqual(theme.light.fileExtensions.ax, "silver-light");
 for (const mapping of [theme.fileExtensions, theme.light.fileExtensions]) {
   for (const extension of ["asx", "ax"]) {
     const definition = theme.iconDefinitions[mapping[extension]];

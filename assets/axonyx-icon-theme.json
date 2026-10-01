@@ -1,10 +1,16 @@
 {
   "iconDefinitions": {
+    "bronze": {
+      "iconPath": "./axonyx-bronze.svg"
+    },
     "gold": {
       "iconPath": "./axonyx-gold.svg"
     },
     "silver": {
       "iconPath": "./axonyx-silver.svg"
+    },
+    "bronze-light": {
+      "iconPath": "./axonyx-bronze-light.svg"
     },
     "gold-light": {
       "iconPath": "./axonyx-gold-light.svg"
@@ -14,7 +20,7 @@
     }
   },
   "fileExtensions": {
-    "asx": "gold",
+    "asx": "bronze",
     "ax": "silver"
   },
   "languageIds": {
@@ -22,7 +28,7 @@
   },
   "light": {
     "fileExtensions": {
-      "asx": "gold-light",
+      "asx": "bronze-light",
       "ax": "silver-light"
     },
     "languageIds": {
