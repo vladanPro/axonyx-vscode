@@ -98,7 +98,7 @@ refactoring for local bindings and parameters.
 
 ## Foundry file icons
 
-Select **Preferences: File Icon Theme > Axonyx Foundry** for gold `.asx`
+Select **Preferences: File Icon Theme > Axonyx Foundry** for bronze `.asx`
 frontend icons and silver `.ax` backend icons. Both retain language ID `ax`,
 so diagnostics, formatting, snippets, and existing editor settings keep working.
 Light editor themes use darker variants for contrast. VS Code allows one file
