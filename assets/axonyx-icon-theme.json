@@ -1,0 +1,38 @@
+{
+  "iconDefinitions": {
+    "bronze": {
+      "iconPath": "./axonyx-bronze.svg"
+    },
+    "gold": {
+      "iconPath": "./axonyx-gold.svg"
+    },
+    "silver": {
+      "iconPath": "./axonyx-silver.svg"
+    },
+    "bronze-light": {
+      "iconPath": "./axonyx-bronze-light.svg"
+    },
+    "gold-light": {
+      "iconPath": "./axonyx-gold-light.svg"
+    },
+    "silver-light": {
+      "iconPath": "./axonyx-silver-light.svg"
+    }
+  },
+  "fileExtensions": {
+    "asx": "bronze",
+    "ax": "silver"
+  },
+  "languageIds": {
+    "ax": "silver"
+  },
+  "light": {
+    "fileExtensions": {
+      "asx": "bronze-light",
+      "ax": "silver-light"
+    },
+    "languageIds": {
+      "ax": "silver-light"
+    }
+  }
+}

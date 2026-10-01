@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.5",
+  "version": "0.0.13",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -27,7 +27,15 @@
     "onCommand:axonyx.formatDocument"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js"
+  },
   "contributes": {
+    "configurationDefaults": {
+      "[ax]": {
+        "editor.defaultFormatter": "vladanpro.axonyx-vscode"
+      }
+    },
     "languages": [
       {
         "id": "ax",
@@ -41,8 +49,8 @@
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "light": "./assets/axonyx-x-icon.svg",
-          "dark": "./assets/axonyx-x-icon.svg"
+          "light": "./assets/axonyx-silver-light.svg",
+          "dark": "./assets/axonyx-silver.svg"
         }
       }
     ],
@@ -67,6 +75,29 @@
       {
         "command": "axonyx.formatDocument",
         "title": "Axonyx: Format Document"
+      }
+    ],
+    "configuration": {
+      "title": "Axonyx",
+      "properties": {
+        "axonyx.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the persistent axonyx-lsp process for diagnostics, formatting, navigation, hover, and completion when available."
+        },
+        "axonyx.languageServer.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "description": "Optional absolute path to the axonyx-lsp executable. Leave empty for local workspace or PATH discovery."
+        }
+      }
+    },
+    "iconThemes": [
+      {
+        "id": "axonyx-foundry",
+        "label": "Axonyx Foundry",
+        "path": "./assets/axonyx-icon-theme.json"
       }
     ]
   },

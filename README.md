@@ -14,8 +14,8 @@ This version focuses on making modern Pages ASX files readable and pleasant in V
 - strings, numbers, booleans, attributes, and embedded `{expression}` blocks
 - starter snippets for pages, data pages, components, scopes, queries, actions, imports, `Head`, `Each`, `If`, `Slot`, routes, and common Foundry UI blocks such as `SectionCard`, `HeroCard`, `ContentGrid`, `SiteShell`, and `Copy`
 - newer Foundry snippets for `Form`, `FormGroup`, `Fieldset`, `Table`, `TableHead`, `TableCell`, `PaginationItem`, and layout primitives
-- parser-backed diagnostics through `cargo ax check` on open/save
-- basic document formatting through `Format Document` or `Axonyx: Format Document`
+- persistent parser-backed diagnostics through `axonyx-lsp` on open/change
+- compiler-owned formatting through `axonyx-lsp`, with a CLI fallback
 - distinct highlighting for typed props/parameters, bindings, function calls,
   runtime scopes, operators, and ASX component/HTML tags
 
@@ -43,7 +43,9 @@ page Home() {
 2. Run `Developer: Install Extension from Location...` and choose this repo folder.
 3. Open any `.asx` page/component or `.ax` backend file.
 
-If you are working inside the Axonyx repo family, the extension also looks for a local sibling `axonyx-framework` checkout and can run diagnostics through that source tree.
+If you are working inside the Axonyx repo family, the extension looks for a
+local sibling `axonyx-framework` checkout and launches its `axonyx-lsp` binary
+through Cargo. Otherwise it looks for `axonyx-lsp` on `PATH`.
 
 For published CLI diagnostics, install the current beta CLI:
 
@@ -51,13 +53,25 @@ For published CLI diagnostics, install the current beta CLI:
 cargo install cargo-axonyx --force
 ```
 
-To format on save, enable VS Code formatting for Axonyx files:
+Until `axonyx-lsp` is published, contributors can install it from a framework
+checkout:
+
+```bash
+cargo install --path crates/axonyx-lsp
+```
+
+Use `axonyx.languageServer.path` to select an explicit binary, or set
+`axonyx.languageServer.enabled` to `false` to use the CLI diagnostics fallback.
+
+The extension automatically becomes the default formatter for Axonyx files.
+Use `Shift+Alt+F` (Format Document) to format the active `.asx` or `.ax` file.
+
+To also format on save, enable the standard VS Code setting for Axonyx files:
 
 ```json
 {
   "[ax]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "vladanpro.axonyx-vscode"
+    "editor.formatOnSave": true
   }
 }
 ```
@@ -68,10 +82,28 @@ Alternative dev flow:
 2. Package the extension: `vsce package`
 3. Install the generated `.vsix` in VS Code.
 
-## Next Good Steps
+## Language Server Support
 
-- faster background diagnostics with a persistent checker process
-- `axonyx-lsp` as a Rust language server behind the extension
-- Contract V1-backed component/prop completion and hover details
-- go-to-definition for local and `@axonyx/ui/...` imports
-- semantic formatting powered by the future `axonyx-lsp`
+- persistent parser and workspace import diagnostics
+- compiler-owned formatting and symbol-aware go-to-definition
+- compiler-owned hover for local, imported, aliased, and namespace symbols
+- workspace references through `Shift+F12` for direct, aliased, and namespace imports
+- safe symbol rename through `F2`, with collision and package-source protection
+- completion for local declarations, imported components, namespace members,
+  typed component props, and literal-union prop values
+- lightweight Foundry prop/value suggestions when the language server has no result
+
+Next: precise parser spans, documentation comments, and richer scope-aware
+refactoring for local bindings and parameters.
+
+## Foundry file icons
+
+Select **Preferences: File Icon Theme > Axonyx Foundry** for bronze `.asx`
+frontend icons and silver `.ax` backend icons. Both retain language ID `ax`,
+so diagnostics, formatting, snippets, and existing editor settings keep working.
+Light editor themes use darker variants for contrast. VS Code allows one file
+icon theme at a time: selecting this theme replaces the current file icon set.
+Other file types retain language-provided icons where available; this theme
+intentionally provides no complete generic file/folder icon collection.
+If another icon theme is active, its mappings take precedence; language fallback
+uses the silver X for both extensions. The extension does not change your theme.
