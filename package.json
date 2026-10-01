@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -29,7 +29,7 @@
   ],
   "main": "./extension.js",
   "scripts": {
-    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js && node scripts/material-icons-smoke.js"
+    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js && node scripts/material-icons-smoke.js && node scripts/syntax-smoke.js"
   },
   "contributes": {
     "configurationDefaults": {
@@ -109,5 +109,9 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:vladanPro/axonyx-vscode.git"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   }
 }
