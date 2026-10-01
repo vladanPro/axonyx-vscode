@@ -39,4 +39,8 @@ for (const mapping of [theme.fileExtensions, theme.light.fileExtensions]) {
 }
 assert.deepStrictEqual(manifest.contributes.languages[0].extensions, [".asx", ".ax"]);
 assert.strictEqual(manifest.contributes.languages[0].id, "ax");
+assert.ok(
+  manifest.contributes.commands.some(({ command }) => command === "axonyx.addIconsToMaterialTheme"),
+  "Material Icon Theme integration must be available as an explicit command",
+);
 console.log("Foundry icon associations and language compatibility passed.");

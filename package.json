@@ -2,7 +2,7 @@
   "name": "axonyx-vscode",
   "displayName": "Axonyx",
   "description": "VS Code language support for Axonyx .asx frontend and .ax backend files.",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "publisher": "vladanpro",
   "license": "MIT",
   "icon": "assets/axonyx-x-icon.png",
@@ -24,11 +24,12 @@
   "activationEvents": [
     "onLanguage:ax",
     "onCommand:axonyx.runDiagnostics",
-    "onCommand:axonyx.formatDocument"
+    "onCommand:axonyx.formatDocument",
+    "onCommand:axonyx.addIconsToMaterialTheme"
   ],
   "main": "./extension.js",
   "scripts": {
-    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js"
+    "test": "node --check extension.js && node scripts/lsp-client-smoke.js && node scripts/manifest-smoke.js && node scripts/material-icons-smoke.js"
   },
   "contributes": {
     "configurationDefaults": {
@@ -75,6 +76,10 @@
       {
         "command": "axonyx.formatDocument",
         "title": "Axonyx: Format Document"
+      },
+      {
+        "command": "axonyx.addIconsToMaterialTheme",
+        "title": "Axonyx: Add Icons to Material Icon Theme"
       }
     ],
     "configuration": {
