@@ -6,6 +6,7 @@
     { "include": "#comments" },
     { "include": "#imports" },
     { "include": "#route-declaration" },
+    { "include": "#structural-braces" },
     { "include": "#declarations" },
     { "include": "#bindings" },
     { "include": "#jsx-tags" },
@@ -285,6 +286,27 @@
         {
           "name": "keyword.operator.assignment",
           "match": "->|:"
+        }
+      ]
+    },
+    "structural-braces": {
+      "patterns": [
+        {
+          "name": "punctuation.section.block.begin.ax",
+          "match": "(?<=\\))\\s*\\{|(?<=ASX)\\s*\\{"
+        },
+        {
+          "name": "meta.declaration.block.ax",
+          "match": "^\\s*(page|layout|component|scope)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(\\{)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.declaration.ax" },
+            "2": { "name": "entity.name.type.ax" },
+            "3": { "name": "punctuation.section.block.begin.ax" }
+          }
+        },
+        {
+          "name": "punctuation.section.block.end.ax",
+          "match": "\\}"
         }
       ]
     },
