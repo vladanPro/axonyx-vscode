@@ -215,16 +215,18 @@ function registerAxonyxCompletions(languageServer) {
   return vscode.languages.registerCompletionItemProvider(
     { language: "ax", scheme: "file" },
     {
-      async provideCompletionItems(document, position) {
+      async provideCompletionItems(document, position, _token, context) {
+        const dbPunctuation = context?.triggerCharacter === "{" || context?.triggerCharacter === ",";
         if (languageServer.running) {
           try {
-            const items = await languageServer.completion(document, position);
+            const items = await languageServer.completion(document, position, context?.triggerCharacter);
             if (items && items.length > 0) return items;
           } catch (_error) {
             // Keep the lightweight Foundry/keyword suggestions after an LSP failure.
           }
         }
 
+        if (dbPunctuation) return [];
         const linePrefix = document.lineAt(position).text.slice(0, position.character);
 
         if (/route\.$/.test(linePrefix)) {
@@ -274,7 +276,7 @@ function registerAxonyxCompletions(languageServer) {
         });
       }
     },
-    ".", "<", "\"", " ", "="
+    ".", "<", "\"", " ", "=", "{", ","
   );
 }
 
@@ -765,11 +767,12 @@ class AxonyxLanguageServer {
     }).filter(Boolean);
   }
 
-  async completion(document, position) {
+  async completion(document, position, triggerCharacter) {
     if (!this.running || !isAxonyxDocument(document)) return null;
     const items = await this.request("textDocument/completion", {
       textDocument: { uri: document.uri.toString() },
       position: { line: position.line, character: position.character },
+      ...(triggerCharacter && { context: { triggerKind: 2, triggerCharacter } }),
     });
     if (!Array.isArray(items)) return [];
 
@@ -1001,8 +1004,12 @@ function mapLspSeverity(severity) {
 
 function mapLspCompletionKind(kind) {
   switch (kind) {
+    case 2:
+      return vscode.CompletionItemKind.Method;
     case 3:
       return vscode.CompletionItemKind.Function;
+    case 5:
+      return vscode.CompletionItemKind.Field;
     case 7:
       return vscode.CompletionItemKind.Class;
     case 9:
