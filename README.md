@@ -53,11 +53,11 @@ For published CLI diagnostics, install the current beta CLI:
 cargo install cargo-axonyx --force
 ```
 
-Until `axonyx-lsp` is published, contributors can install it from a framework
-checkout:
+For database completions, install `axonyx-lsp` 0.8.4 or later and reload
+the VS Code window:
 
 ```bash
-cargo install --path crates/axonyx-lsp
+cargo install axonyx-lsp --version 0.8.4 --locked
 ```
 
 Use `axonyx.languageServer.path` to select an explicit binary, or set
@@ -91,6 +91,8 @@ Alternative dev flow:
 - safe symbol rename through `F2`, with collision and package-source protection
 - completion for local declarations, imported components, namespace members,
   typed component props, and literal-union prop values
+- backend database tables, methods, and filter columns via the local
+  `cargo ax db pull` snapshot; column suggestions open after `{` and `,`
 - lightweight Foundry prop/value suggestions when the language server has no result
 
 Next: precise parser spans, documentation comments, and richer scope-aware
