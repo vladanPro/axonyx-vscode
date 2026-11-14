@@ -279,8 +279,9 @@ async function main() {
 
   const propCompletionWrites = [];
   client.process.stdin.write = (value) => propCompletionWrites.push(Buffer.from(value));
-  const propCompletion = client.completion(document, { line: 3, character: 4 });
+  const propCompletion = client.completion(document, { line: 3, character: 4 }, "{");
   assert.ok(Buffer.concat(propCompletionWrites).includes(Buffer.from("textDocument/completion")));
+  assert.ok(Buffer.concat(propCompletionWrites).includes(Buffer.from('"triggerCharacter":"{"')));
   client.acceptOutput(frame({
     jsonrpc: "2.0",
     id: 3,
