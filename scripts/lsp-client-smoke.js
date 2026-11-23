@@ -183,6 +183,12 @@ async function main() {
   client.acceptOutput(responseFrame.subarray(31));
   assert.deepStrictEqual(await response, { ready: true });
 
+  // A completion hint is not a component's prop contract.
+  vscodeMock.workspace.textDocuments.push({
+    uri: vscodeMock.Uri.parse("file:///workspace/app/page.asx"),
+    getText: () => '<Badge tone="success">Ready</Badge>',
+    positionAt: (character) => ({ line: 0, character }),
+  });
   const diagnosticFrame = frame({
     jsonrpc: "2.0",
     method: "textDocument/publishDiagnostics",
@@ -208,6 +214,7 @@ async function main() {
   }
 
   assert.strictEqual(collectionWrites.length, 1);
+  assert.strictEqual(collectionWrites[0].diagnostics.length, 1);
   assert.strictEqual(collectionWrites[0].diagnostics[0].message, "pogrešan tag");
   assert.strictEqual(collectionWrites[0].diagnostics[0].code, "axonyx-parse");
   assert.deepStrictEqual(collectionWrites[0].diagnostics[0].range.start, {

@@ -950,10 +950,6 @@ class AxonyxLanguageServer {
       item.code = diagnostic.code;
       return item;
     });
-    const document = vscode.workspace.textDocuments.find(
-      (candidate) => candidate.uri.toString() === uri.toString(),
-    );
-    if (document) diagnostics.push(...getLocalValueDiagnostics(document));
     this.collection.set(uri, diagnostics);
   }
 
@@ -1088,9 +1084,9 @@ class AxonyxDiagnosticRunner {
     return new Promise((resolve) => {
       const timer = setTimeout(async () => {
         this.pending.delete(key);
-        const diagnostics = getLocalValueDiagnostics(document);
+        let diagnostics = [];
         try {
-          diagnostics.push(...(await runAxCheck(document)));
+          diagnostics = await runAxCheck(document);
         } catch (error) {
           this.reportExecutionIssue(error, document);
         }
@@ -1114,33 +1110,6 @@ class AxonyxDiagnosticRunner {
       );
     }
   }
-}
-
-function getLocalValueDiagnostics(document) {
-  const diagnostics = [];
-  const text = document.getText();
-  const regex = /\b(variant|surface|border|brush|gap|align|max|tone|state)\s*=\s*"([^"]+)"/g;
-  let match;
-
-  while ((match = regex.exec(text))) {
-    const prop = match[1];
-    const value = match[2];
-    const allowed = VALUE_SUGGESTIONS[prop];
-    if (!allowed || allowed.includes(value)) continue;
-
-    const start = document.positionAt(match.index + match[0].indexOf(value));
-    const end = document.positionAt(match.index + match[0].indexOf(value) + value.length);
-    const diagnostic = new vscode.Diagnostic(
-      new vscode.Range(start, end),
-      `Invalid ${prop} value "${value}". Expected one of: ${allowed.join(", ")}.`,
-      vscode.DiagnosticSeverity.Warning,
-    );
-    diagnostic.source = "axonyx";
-    diagnostic.code = "axonyx-prop-value";
-    diagnostics.push(diagnostic);
-  }
-
-  return diagnostics;
 }
 
 async function runAxCheck(document) {
